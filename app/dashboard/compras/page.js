@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRealtime } from '@/hooks/useRealtime'
 
 const statusLabels = {
   borrador: 'Borrador', enviada: 'Enviada', aprobada_consejo: 'Aprobada', rechazada_consejo: 'Rechazada',
   en_analisis: 'En Análisis', proveedor_definido: 'Proveedor Def.', pedido_realizado: 'Pedido Realizado',
   factura_recibida: 'Factura Recibida', factura_devuelta: 'Factura Devuelta', pagado: 'Pagado'
 }
-
 const statusColors = {
   borrador: 'bg-slate-100 text-slate-600', enviada: 'bg-blue-100 text-blue-700',
   aprobada_consejo: 'bg-green-100 text-green-700', rechazada_consejo: 'bg-red-100 text-red-700',
@@ -16,9 +16,7 @@ const statusColors = {
   pedido_realizado: 'bg-indigo-100 text-indigo-700', factura_recibida: 'bg-orange-100 text-orange-700',
   factura_devuelta: 'bg-red-100 text-red-600', pagado: 'bg-green-100 text-green-800'
 }
-
 const categorias = ['Mantenimiento','Aseo','Servicios Públicos','Seguridad','Administración','Zonas Comunes','Equipos','Otros']
-
 const emptyForm = { title: '', description: '', justification: '', category: '', accounting_account: '', quantity: 1, unit: 'und', estimated_value: 0, priority: 'normal' }
 
 export default function ComprasPage() {
@@ -31,7 +29,6 @@ export default function ComprasPage() {
   const [filterStatus, setFilterStatus] = useState('')
 
   const fetchCompras = async () => {
-    setLoading(true)
     const res = await fetch('/api/compras')
     const data = await res.json()
     setCompras(data.data || [])
@@ -39,6 +36,7 @@ export default function ComprasPage() {
   }
 
   useEffect(() => { fetchCompras() }, [])
+  useRealtime('purchase_requests', fetchCompras)
 
   const handleCreate = async () => {
     setSaving(true)
@@ -48,7 +46,6 @@ export default function ComprasPage() {
     if (!res.ok) { setError(data.error || 'Error al crear'); setSaving(false); return }
     setShowModal(false)
     setForm(emptyForm)
-    fetchCompras()
     setSaving(false)
   }
 
@@ -115,7 +112,7 @@ export default function ComprasPage() {
                 <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Descripción del bien/servicio *</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Descripción *</label>
                 <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>

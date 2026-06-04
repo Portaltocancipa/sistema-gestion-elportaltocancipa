@@ -2,54 +2,47 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRealtime } from '@/hooks/useRealtime'
 
 const statusColors = {
-  abierto: 'bg-blue-100 text-blue-700',
-  en_gestion: 'bg-yellow-100 text-yellow-700',
-  pendiente_info: 'bg-orange-100 text-orange-700',
-  resuelto: 'bg-green-100 text-green-700',
+  abierto: 'bg-blue-100 text-blue-700', en_gestion: 'bg-yellow-100 text-yellow-700',
+  pendiente_info: 'bg-orange-100 text-orange-700', resuelto: 'bg-green-100 text-green-700',
   cerrado: 'bg-slate-100 text-slate-600',
 }
-
 const statusLabels = {
-  abierto: 'Abierto',
-  en_gestion: 'En Gestión',
-  pendiente_info: 'Pendiente Info',
-  resuelto: 'Resuelto',
-  cerrado: 'Cerrado',
+  abierto: 'Abierto', en_gestion: 'En Gestión', pendiente_info: 'Pendiente Info',
+  resuelto: 'Resuelto', cerrado: 'Cerrado',
+}
+const priorityColors = {
+  baja: 'bg-slate-100 text-slate-600', normal: 'bg-blue-100 text-blue-600',
+  alta: 'bg-orange-100 text-orange-600', urgente: 'bg-red-100 text-red-600',
 }
 
-const priorityColors = {
-  baja: 'bg-slate-100 text-slate-600',
-  normal: 'bg-blue-100 text-blue-600',
-  alta: 'bg-orange-100 text-orange-600',
-  urgente: 'bg-red-100 text-red-600',
-}
+const emptyForm = { ticket_type_id: '', title: '', description: '', priority: 'normal', apartment: '' }
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [ticketTypes, setTicketTypes] = useState([])
-  const [form, setForm] = useState({ ticket_type_id: '', title: '', description: '', priority: 'normal', apartment: '' })
+  const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
-  const [user, setUser] = useState(null)
-
-  useEffect(() => {
-    fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user))
-    fetchTickets()
-    fetch('/api/parametros').then(r => r.json()).then(d => setTicketTypes(d.data?.filter(t => t.is_active) || []))
-  }, [])
 
   const fetchTickets = async () => {
-    setLoading(true)
     const res = await fetch('/api/tickets')
     const data = await res.json()
     setTickets(data.data || [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchTickets()
+    fetch('/api/parametros').then(r => r.json()).then(d => setTicketTypes(d.data?.filter(t => t.is_active) || []))
+  }, [])
+
+  useRealtime('tickets', fetchTickets)
 
   const handleCreate = async () => {
     setSaving(true)
@@ -58,8 +51,7 @@ export default function TicketsPage() {
     const data = await res.json()
     if (!res.ok) { setError(data.error || 'Error al crear ticket'); setSaving(false); return }
     setShowModal(false)
-    setForm({ ticket_type_id: '', title: '', description: '', priority: 'normal', apartment: '' })
-    fetchTickets()
+    setForm(emptyForm)
     setSaving(false)
   }
 
@@ -87,9 +79,7 @@ export default function TicketsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-slate-400">Cargando...</div>
-        ) : (
+        {loading ? <div className="p-8 text-center text-slate-400">Cargando...</div> : (
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-slate-600 text-left">
               <tr>
@@ -110,21 +100,13 @@ export default function TicketsPage() {
                   <td className="px-4 py-3 font-medium text-slate-800 max-w-xs truncate">{t.title}</td>
                   <td className="px-4 py-3 text-slate-600">{t.ticket_types?.name || '-'}</td>
                   <td className="px-4 py-3 text-slate-600">{t.profiles?.full_name || '-'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs ${priorityColors[t.priority]}`}>{t.priority}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs ${statusColors[t.status]}`}>{statusLabels[t.status]}</span>
-                  </td>
+                  <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${priorityColors[t.priority]}`}>{t.priority}</span></td>
+                  <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${statusColors[t.status]}`}>{statusLabels[t.status]}</span></td>
                   <td className="px-4 py-3 text-slate-600 text-xs">{t.due_date || '-'}</td>
-                  <td className="px-4 py-3">
-                    <Link href={`/dashboard/tickets/${t.id}`} className="text-blue-600 hover:underline text-xs">Ver</Link>
-                  </td>
+                  <td className="px-4 py-3"><Link href={`/dashboard/tickets/${t.id}`} className="text-blue-600 hover:underline text-xs">Ver</Link></td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">No hay tickets</td></tr>
-              )}
+              {filtered.length === 0 && <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">No hay tickets</td></tr>}
             </tbody>
           </table>
         )}
