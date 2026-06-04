@@ -18,7 +18,14 @@ export async function PUT(request, { params }) {
   }
   const { id } = await params
   const body = await request.json()
-  const updates = { full_name: body.full_name, role: body.role, apartment: body.apartment, phone: body.phone, is_active: body.is_active }
+  const updates = {
+    full_name: body.full_name,
+    role: body.role,
+    apartment: body.apartment,
+    phone: body.phone,
+    email: body.email,
+    is_active: body.is_active
+  }
   if (body.password) updates.password_hash = await bcrypt.hash(body.password, 10)
   const { data, error } = await supabaseAdmin.from('profiles').update(updates).eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
