@@ -14,7 +14,7 @@ const roles = [
   { value: 'copropietario', label: 'Copropietario' },
 ]
 
-const emptyForm = { username: '', password: '', full_name: '', role: 'copropietario', apartment: '', phone: '', is_active: true }
+const emptyForm = { username: '', password: '', full_name: '', email: '', role: 'copropietario', apartment: '', phone: '', is_active: true }
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([])
@@ -96,6 +96,7 @@ export default function UsuariosPage() {
               <tr>
                 <th className="px-4 py-3 font-medium">Nombre</th>
                 <th className="px-4 py-3 font-medium">Usuario</th>
+                <th className="px-4 py-3 font-medium">Email</th>
                 <th className="px-4 py-3 font-medium">Perfil</th>
                 <th className="px-4 py-3 font-medium">Apto</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
@@ -107,6 +108,7 @@ export default function UsuariosPage() {
                 <tr key={u.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium text-slate-800">{u.full_name}</td>
                   <td className="px-4 py-3 text-slate-600">{u.username}</td>
+                  <td className="px-4 py-3 text-slate-600">{u.email || '-'}</td>
                   <td className="px-4 py-3">
                     <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">{roleLabel(u.role)}</span>
                   </td>
@@ -123,7 +125,7 @@ export default function UsuariosPage() {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">No hay usuarios</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">No hay usuarios</td></tr>
               )}
             </tbody>
           </table>
@@ -143,6 +145,10 @@ export default function UsuariosPage() {
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Usuario *</label>
                 <input value={form.username} onChange={e => setForm({...form, username: e.target.value})} disabled={!!editUser} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Correo electrónico</label>
+                <input type="email" value={form.email || ''} onChange={e => setForm({...form, email: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="correo@ejemplo.com" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">{editUser ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña *'}</label>
