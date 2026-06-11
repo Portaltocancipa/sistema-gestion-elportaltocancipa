@@ -59,9 +59,10 @@ export default function CompraDetailPage() {
 
   const openAction = (type) => { setActionType(type); setActionForm({}); setNotes(''); setShowActionModal(true) }
 
-  const isConsejo = user && ['presidente_consejo','secretario_consejo','admin_plataforma','admin_copropiedad'].includes(user.role)
-  const isCompras = user && ['admin_plataforma','admin_copropiedad','contador','tesorero','vocal_consejo','presidente_consejo','secretario_consejo'].includes(user.role)
+  const isConsejo = user && ['presidente_consejo','secretario_consejo'].includes(user.role)
+  const isAdministrador = user && ['admin_copropiedad','admin_plataforma','vocal_consejo'].includes(user.role)
   const isTesoreria = user && ['tesorero','admin_plataforma'].includes(user.role)
+  const esMiSolicitud = compra && user && compra.created_by === user.id
 
   if (loading) return <div className="p-8 text-center text-slate-400">Cargando...</div>
   if (!compra) return <div className="p-8 text-center text-slate-400">Solicitud no encontrada</div>
@@ -153,16 +154,34 @@ export default function CompraDetailPage() {
 
         <div className="flex gap-2 flex-wrap mt-4">
           {isConsejo && compra.status === 'enviada' && (
+            <button onClick={() => openAction('en_analisis')} className="bg-yellow-600 text-white px-3 py-1.5 rounded-lg text-xs">🔍 Poner en Análisis</button>
+          )}
+          {isConsejo && compra.status === 'en_analisis' && !esMiSolicitud && (
             <>
               <button onClick={() => openAction('aprobar_consejo')} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs">✓ Aprobar</button>
               <button onClick={() => openAction('rechazar_consejo')} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs">✗ Rechazar</button>
             </>
           )}
-          {isCompras && compra.status === 'aprobada_consejo' && (
-            <button onClick={() => openAction('compras')} className="bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs">📋 Gestionar Compras</button>
+          {isConsejo && compra.status === 'en_analisis' && esMiSolicitud && (
+            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">No puede aprobar su propia solicitud</span>
           )}
-          {isTesoreria && compra.status === 'pedido_realizado' && (
-            <button onClick={() => openAction('pago')} className="bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs">💳 Registrar Pago</button>
+          {isAdministrador && compra.status === 'aprobada_consejo' && (
+            <button onClick={() => openAction('proveedor')} className="bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs">🏢 Definir Proveedor</button>
+          )}
+          {isAdministrador && compra.status === 'proveedor_definido' && (
+            <button onClick={() => openAction('pedido')} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs">📦 Confirmar Pedido</button>
+          )}
+          {isAdministrador && compra.status === 'pedido_realizado' && (
+            <button onClick={() => openAction('factura')} className="bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs">🧾 Registrar Factura</button>
+          )}
+          {isTesoreria && compra.status === 'factura_recibida' && (
+            <>
+              <button onClick={() => openAction('pago')} className="bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs">💳 Registrar Pago</button>
+              <button onClick={() => openAction('devolver_factura')} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs">↩ Devolver Factura</button>
+            </>
+          )}
+          {isAdministrador && compra.status === 'factura_devuelta' && (
+            <button onClick={() => openAction('factura')} className="bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs">🔄 Resubir Factura Corregida</button>
           )}
         </div>
       </div>
@@ -188,13 +207,21 @@ export default function CompraDetailPage() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md max-h-screen overflow-y-auto">
             <h2 className="text-lg font-bold text-slate-800 mb-4">
+              {actionType === 'en_analisis' && '🔍 Poner en Análisis'}
               {actionType === 'aprobar_consejo' && '✓ Aprobar Solicitud'}
               {actionType === 'rechazar_consejo' && '✗ Rechazar Solicitud'}
-              {actionType === 'compras' && '📋 Gestionar Compras'}
+              {actionType === 'proveedor' && '🏢 Definir Proveedor'}
+              {actionType === 'pedido' && '📦 Confirmar Pedido Realizado'}
+              {actionType === 'factura' && '🧾 Registrar Factura Recibida'}
+              {actionType === 'devolver_factura' && '↩ Devolver Factura'}
               {actionType === 'pago' && '💳 Registrar Pago'}
             </h2>
 
             <div className="space-y-3">
+              {actionType === 'en_analisis' && (
+                <p className="text-sm text-slate-500">La solicitud pasará a estado <strong>En Análisis</strong>. Puede agregar observaciones.</p>
+              )}
+
               {actionType === 'aprobar_consejo' && (
                 <>
                   <div>
@@ -215,11 +242,11 @@ export default function CompraDetailPage() {
                 </div>
               )}
 
-              {actionType === 'compras' && (
+              {actionType === 'proveedor' && (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Fecha aprobación Consejo</label>
-                    <input type="date" value={actionForm.council_approval_date || ''} onChange={e => setActionForm({...actionForm, council_approval_date: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Proveedor *</label>
+                    <textarea placeholder="Nombre, NIT, contacto, condiciones..." value={actionForm.supplier_definition || ''} onChange={e => setActionForm({...actionForm, supplier_definition: e.target.value})} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Características de la compra</label>
@@ -230,26 +257,32 @@ export default function CompraDetailPage() {
                     <textarea value={actionForm.purchase_requirements || ''} onChange={e => setActionForm({...actionForm, purchase_requirements: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Observaciones</label>
-                    <textarea value={actionForm.purchase_observations || ''} onChange={e => setActionForm({...actionForm, purchase_observations: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Definición del proveedor</label>
-                    <textarea placeholder="Nombre, NIT, contacto, condiciones..." value={actionForm.supplier_definition || ''} onChange={e => setActionForm({...actionForm, supplier_definition: e.target.value})} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Fecha aprobación Consejo</label>
+                    <input type="date" value={actionForm.council_approval_date || ''} onChange={e => setActionForm({...actionForm, council_approval_date: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                 </>
               )}
 
+              {actionType === 'pedido' && (
+                <p className="text-sm text-slate-500">Confirme que el pedido fue realizado al proveedor. Puede agregar observaciones.</p>
+              )}
+
+              {actionType === 'factura' && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">URL de la factura (adjunto)</label>
+                  <input placeholder="https://drive.google.com/..." value={actionForm.invoice_file_url || ''} onChange={e => setActionForm({...actionForm, invoice_file_url: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
+              )}
+
+              {actionType === 'devolver_factura' && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Motivo de la devolución *</label>
+                  <textarea placeholder="Indique por qué se devuelve la factura..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
+              )}
+
               {actionType === 'pago' && (
                 <>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">¿Llegó la factura?</label>
-                    <select value={actionForm.invoice_received || ''} onChange={e => setActionForm({...actionForm, invoice_received: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                      <option value="">Seleccionar...</option>
-                      <option value="si">Sí</option>
-                      <option value="no">No</option>
-                    </select>
-                  </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Monto pagado *</label>
                     <input type="number" value={actionForm.payment_amount || ''} onChange={e => setActionForm({...actionForm, payment_amount: parseFloat(e.target.value)})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
@@ -284,14 +317,10 @@ export default function CompraDetailPage() {
                     <label className="block text-xs font-medium text-slate-600 mb-1">Cuenta contable del pago</label>
                     <input value={actionForm.payment_accounting_account || ''} onChange={e => setActionForm({...actionForm, payment_accounting_account: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">URL Factura (adjunto)</label>
-                    <input placeholder="https://..." value={actionForm.invoice_file_url || ''} onChange={e => setActionForm({...actionForm, invoice_file_url: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-                  </div>
                 </>
               )}
 
-              {actionType !== 'rechazar_consejo' && (
+              {!['rechazar_consejo','devolver_factura'].includes(actionType) && (
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Observaciones</label>
                   <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
@@ -303,9 +332,13 @@ export default function CompraDetailPage() {
               <button onClick={() => setShowActionModal(false)} className="flex-1 border border-slate-300 text-slate-700 py-2 rounded-lg text-sm hover:bg-slate-50">Cancelar</button>
               <button onClick={() => {
                 const statusMap = {
+                  en_analisis: 'en_analisis',
                   aprobar_consejo: 'aprobada_consejo',
                   rechazar_consejo: 'rechazada_consejo',
-                  compras: 'pedido_realizado',
+                  proveedor: 'proveedor_definido',
+                  pedido: 'pedido_realizado',
+                  factura: 'factura_recibida',
+                  devolver_factura: 'factura_devuelta',
                   pago: 'pagado'
                 }
                 updateCompra({ status: statusMap[actionType], ...actionForm })

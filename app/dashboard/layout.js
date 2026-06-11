@@ -37,7 +37,7 @@ export default function DashboardLayout({ children }) {
 
   const roleLabels = {
     admin_plataforma: 'Administrador Plataforma',
-    admin_copropiedad: 'Administrador Copropiedad',
+    admin_copropiedad: 'Administrador',
     contador: 'Contador',
     tesorero: 'Tesorero',
     presidente_consejo: 'Presidente Consejo',
