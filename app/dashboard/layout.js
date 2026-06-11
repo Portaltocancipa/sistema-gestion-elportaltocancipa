@@ -49,10 +49,15 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-slate-100">
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-slate-900 text-white flex flex-col transition-all duration-300`}>
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          {sidebarOpen && <span className="font-bold text-sm">El Portal de Tocancipá</span>}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-slate-400 hover:text-white">
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-green-900 text-white flex flex-col transition-all duration-300 flex-shrink-0`}>
+        <div className="flex items-center justify-between p-4 border-b border-green-700">
+          {sidebarOpen && (
+            <div>
+              <span className="font-bold text-sm leading-tight block">El Portal</span>
+              <span className="text-xs text-green-300 leading-tight">de Tocancipá</span>
+            </div>
+          )}
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-green-300 hover:text-white">
             {sidebarOpen ? '◀' : '▶'}
           </button>
         </div>
@@ -62,7 +67,7 @@ export default function DashboardLayout({ children }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-slate-700 ${pathname === item.href ? 'bg-green-800' : ''}`}
+              className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-green-700 ${pathname === item.href ? 'bg-green-700 border-l-4 border-orange-400' : 'border-l-4 border-transparent'}`}
             >
               <span className="text-lg">{item.icon}</span>
               {sidebarOpen && <span>{item.label}</span>}
@@ -70,16 +75,16 @@ export default function DashboardLayout({ children }) {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-700">
+        <div className="p-4 border-t border-green-700">
           {sidebarOpen && user && (
             <div className="mb-3">
               <p className="text-sm font-medium">{user.full_name}</p>
-              <p className="text-xs text-slate-400">{roleLabels[user.role]}</p>
+              <p className="text-xs text-green-300">{roleLabels[user.role]}</p>
             </div>
           )}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-sm text-green-300 hover:text-white transition-colors"
           >
             <span>🚪</span>
             {sidebarOpen && <span>Cerrar sesión</span>}
