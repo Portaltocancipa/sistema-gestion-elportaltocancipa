@@ -62,7 +62,7 @@ export default function CompraDetailPage() {
   const isConsejo = user && ['presidente_consejo','secretario_consejo'].includes(user.role)
   const isAdministrador = user && ['admin_copropiedad','admin_plataforma','vocal_consejo'].includes(user.role)
   const isTesoreria = user && ['tesorero','admin_plataforma'].includes(user.role)
-  const isAdmin = user && ['admin_plataforma','admin_copropiedad'].includes(user.role)
+  const isAdmin = user && user.role === 'admin_plataforma'
   const esMiSolicitud = compra && user && compra.created_by === user.id
 
   const eliminarSolicitud = async () => {

@@ -149,7 +149,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const user = await getUser()
-  if (!user || !['admin_plataforma', 'admin_copropiedad'].includes(user.role))
+  if (!user || user.role !== 'admin_plataforma')
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   const { id } = await params
   const { error } = await supabaseAdmin.from('purchase_requests').delete().eq('id', id)
