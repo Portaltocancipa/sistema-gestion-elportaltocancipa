@@ -49,14 +49,22 @@ export async function PUT(request, { params }) {
     const consejoTransitions = ['en_analisis', 'aprobada_consejo', 'rechazada_consejo']
     const adminTransitions = ['proveedor_definido', 'pedido_realizado', 'factura_recibida']
     const tesoreriaTransitions = ['factura_devuelta', 'pagado']
-    if (consejoTransitions.includes(body.status) && !CONSEJO_ROLES.includes(user.role))
-      return NextResponse.json({ error: 'Solo el Consejo puede realizar esta acción' }, { status: 403 })
-    if (['aprobada_consejo', 'rechazada_consejo'].includes(body.status) && current?.created_by === user.id)
-      return NextResponse.json({ error: 'No puede aprobar su propia solicitud' }, { status: 403 })
-    if (adminTransitions.includes(body.status) && !ADMIN_ROLES.includes(user.role))
-      return NextResponse.json({ error: 'Solo el Administrador puede realizar esta acción' }, { status: 403 })
-    if (tesoreriaTransitions.includes(body.status) && !TESORERIA_ROLES.includes(user.role))
-      return NextResponse.json({ error: 'Solo Tesorería puede realizar esta acción' }, { status: 403 })
+
+    if (body.status === 'retirada') {
+      if (current?.created_by !== user.id)
+        return NextResponse.json({ error: 'Solo quien creó la solicitud puede retirarla' }, { status: 403 })
+      if (!['enviada', 'en_analisis'].includes(current?.status))
+        return NextResponse.json({ error: 'Solo se puede retirar una solicitud antes de ser aprobada' }, { status: 403 })
+    } else {
+      if (consejoTransitions.includes(body.status) && !CONSEJO_ROLES.includes(user.role))
+        return NextResponse.json({ error: 'Solo el Consejo puede realizar esta acción' }, { status: 403 })
+      if (['aprobada_consejo', 'rechazada_consejo'].includes(body.status) && current?.created_by === user.id)
+        return NextResponse.json({ error: 'No puede aprobar su propia solicitud' }, { status: 403 })
+      if (adminTransitions.includes(body.status) && !ADMIN_ROLES.includes(user.role))
+        return NextResponse.json({ error: 'Solo el Administrador puede realizar esta acción' }, { status: 403 })
+      if (tesoreriaTransitions.includes(body.status) && !TESORERIA_ROLES.includes(user.role))
+        return NextResponse.json({ error: 'Solo Tesorería puede realizar esta acción' }, { status: 403 })
+    }
   }
 
   const updates = { ...body }

@@ -7,7 +7,8 @@ const statusLabels = {
   borrador: 'Borrador', enviada: 'Enviada', aprobada_consejo: 'Aprobada por Consejo',
   rechazada_consejo: 'Rechazada por Consejo', en_analisis: 'En Análisis',
   proveedor_definido: 'Proveedor Definido', pedido_realizado: 'Pedido Realizado',
-  factura_recibida: 'Factura Recibida', factura_devuelta: 'Factura Devuelta', pagado: 'Pagado'
+  factura_recibida: 'Factura Recibida', factura_devuelta: 'Factura Devuelta', pagado: 'Pagado',
+  retirada: 'Retirada'
 }
 
 const statusColors = {
@@ -15,7 +16,8 @@ const statusColors = {
   aprobada_consejo: 'bg-green-100 text-green-700', rechazada_consejo: 'bg-red-100 text-red-700',
   en_analisis: 'bg-yellow-100 text-yellow-700', proveedor_definido: 'bg-purple-100 text-purple-700',
   pedido_realizado: 'bg-indigo-100 text-indigo-700', factura_recibida: 'bg-orange-100 text-orange-700',
-  factura_devuelta: 'bg-red-100 text-red-600', pagado: 'bg-green-100 text-green-800'
+  factura_devuelta: 'bg-red-100 text-red-600', pagado: 'bg-green-100 text-green-800',
+  retirada: 'bg-slate-100 text-slate-500'
 }
 
 export default function CompraDetailPage() {
@@ -196,6 +198,9 @@ export default function CompraDetailPage() {
           {isAdministrador && compra.status === 'factura_devuelta' && (
             <button onClick={() => openAction('factura')} className="bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs">🔄 Resubir Factura Corregida</button>
           )}
+          {esMiSolicitud && ['enviada','en_analisis'].includes(compra.status) && (
+            <button onClick={() => openAction('retirar')} className="bg-slate-500 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs">↩ Retirar</button>
+          )}
         </div>
       </div>
 
@@ -228,9 +233,20 @@ export default function CompraDetailPage() {
               {actionType === 'factura' && '🧾 Registrar Factura Recibida'}
               {actionType === 'devolver_factura' && '↩ Devolver Factura'}
               {actionType === 'pago' && '💳 Registrar Pago'}
+              {actionType === 'retirar' && '↩ Retirar Solicitud'}
             </h2>
 
             <div className="space-y-3">
+              {actionType === 'retirar' && (
+                <>
+                  <p className="text-sm text-slate-500 mb-2">¿Está seguro de que desea retirar esta solicitud? No podrá continuar su trámite.</p>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Motivo (opcional)</label>
+                    <textarea placeholder="Indique el motivo del retiro..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+                  </div>
+                </>
+              )}
+
               {actionType === 'en_analisis' && (
                 <p className="text-sm text-slate-500">La solicitud pasará a estado <strong>En Análisis</strong>. Puede agregar observaciones.</p>
               )}
@@ -333,7 +349,7 @@ export default function CompraDetailPage() {
                 </>
               )}
 
-              {!['rechazar_consejo','devolver_factura'].includes(actionType) && (
+              {!['rechazar_consejo','devolver_factura','retirar'].includes(actionType) && (
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Observaciones</label>
                   <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
@@ -352,7 +368,8 @@ export default function CompraDetailPage() {
                   pedido: 'pedido_realizado',
                   factura: 'factura_recibida',
                   devolver_factura: 'factura_devuelta',
-                  pago: 'pagado'
+                  pago: 'pagado',
+                  retirar: 'retirada'
                 }
                 updateCompra({ status: statusMap[actionType], ...actionForm })
               }} disabled={saving} className="flex-1 bg-orange-700 hover:bg-orange-800 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60">
