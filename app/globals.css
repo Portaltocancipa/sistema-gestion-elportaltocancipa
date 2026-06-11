@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@source "../app/**/*.{js,jsx}";
+@source "../components/**/*.{js,jsx}";
+@source "../hooks/**/*.{js,jsx}";
 
 body {
   background-color: #f1f5f9;
