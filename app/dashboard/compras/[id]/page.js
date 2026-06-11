@@ -68,7 +68,7 @@ export default function CompraDetailPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => router.back()} className="text-blue-600 text-sm mb-4 hover:underline">← Volver</button>
+      <button onClick={() => router.back()} className="text-green-700 text-sm mb-4 hover:underline">← Volver</button>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-4">
         <div className="flex items-start justify-between mb-4">
@@ -92,19 +92,19 @@ export default function CompraDetailPage() {
         </div>
 
         <div className="grid grid-cols-4 gap-3 mb-4 text-sm">
-          <div className="bg-blue-50 rounded-lg p-3 text-center">
+          <div className="bg-green-50 rounded-lg p-3 text-center">
             <p className="text-xs text-slate-500">Cantidad</p>
             <p className="font-bold text-slate-800">{compra.quantity} {compra.unit}</p>
           </div>
-          <div className="bg-blue-50 rounded-lg p-3 text-center">
+          <div className="bg-green-50 rounded-lg p-3 text-center">
             <p className="text-xs text-slate-500">Valor Unit.</p>
             <p className="font-bold text-slate-800">${(compra.estimated_value || 0).toLocaleString('es-CO')}</p>
           </div>
-          <div className="bg-blue-50 rounded-lg p-3 text-center">
+          <div className="bg-green-50 rounded-lg p-3 text-center">
             <p className="text-xs text-slate-500">Total Est.</p>
             <p className="font-bold text-slate-800">${(compra.estimated_total || 0).toLocaleString('es-CO')}</p>
           </div>
-          <div className="bg-blue-50 rounded-lg p-3 text-center">
+          <div className="bg-green-50 rounded-lg p-3 text-center">
             <p className="text-xs text-slate-500">Presupuesto Máx.</p>
             <p className="font-bold text-slate-800">{compra.max_budget ? `$${compra.max_budget.toLocaleString('es-CO')}` : '-'}</p>
           </div>
@@ -144,7 +144,7 @@ export default function CompraDetailPage() {
               {compra.invoice_file_url && (
                 <span className="col-span-2">
                   <strong>Factura: </strong>
-                  <a href={compra.invoice_file_url} target="_blank" className="text-blue-600 underline">Ver adjunto</a>
+                  <a href={compra.invoice_file_url} target="_blank" className="text-green-700 underline">Ver adjunto</a>
                 </span>
               )}
             </div>
@@ -172,7 +172,7 @@ export default function CompraDetailPage() {
         <div className="space-y-2">
           {compra.purchase_history?.sort((a,b) => new Date(a.created_at) - new Date(b.created_at)).map(h => (
             <div key={h.id} className="flex items-start gap-3 text-sm">
-              <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></div>
+              <div className="w-2 h-2 rounded-full bg-green-600 mt-1.5 flex-shrink-0"></div>
               <div>
                 <span className="font-medium text-slate-700">{h.profiles?.full_name}</span>
                 <span className="text-slate-500"> → {statusLabels[h.to_status]}</span>
@@ -199,11 +199,11 @@ export default function CompraDetailPage() {
                 <>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Cuenta Contable *</label>
-                    <input placeholder="Ej: 5205" value={actionForm.accounting_account || ''} onChange={e => setActionForm({...actionForm, accounting_account: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input placeholder="Ej: 5205" value={actionForm.accounting_account || ''} onChange={e => setActionForm({...actionForm, accounting_account: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Presupuesto Máximo *</label>
-                    <input type="number" placeholder="0" value={actionForm.max_budget || ''} onChange={e => setActionForm({...actionForm, max_budget: parseFloat(e.target.value)})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="number" placeholder="0" value={actionForm.max_budget || ''} onChange={e => setActionForm({...actionForm, max_budget: parseFloat(e.target.value)})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                 </>
               )}
@@ -211,7 +211,7 @@ export default function CompraDetailPage() {
               {actionType === 'rechazar_consejo' && (
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Motivo del rechazo *</label>
-                  <textarea placeholder="Explique el motivo del rechazo..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <textarea placeholder="Explique el motivo del rechazo..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                 </div>
               )}
 
@@ -219,23 +219,23 @@ export default function CompraDetailPage() {
                 <>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Fecha aprobación Consejo</label>
-                    <input type="date" value={actionForm.council_approval_date || ''} onChange={e => setActionForm({...actionForm, council_approval_date: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="date" value={actionForm.council_approval_date || ''} onChange={e => setActionForm({...actionForm, council_approval_date: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Características de la compra</label>
-                    <textarea value={actionForm.purchase_characteristics || ''} onChange={e => setActionForm({...actionForm, purchase_characteristics: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <textarea value={actionForm.purchase_characteristics || ''} onChange={e => setActionForm({...actionForm, purchase_characteristics: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Requisitos</label>
-                    <textarea value={actionForm.purchase_requirements || ''} onChange={e => setActionForm({...actionForm, purchase_requirements: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <textarea value={actionForm.purchase_requirements || ''} onChange={e => setActionForm({...actionForm, purchase_requirements: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Observaciones</label>
-                    <textarea value={actionForm.purchase_observations || ''} onChange={e => setActionForm({...actionForm, purchase_observations: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <textarea value={actionForm.purchase_observations || ''} onChange={e => setActionForm({...actionForm, purchase_observations: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Definición del proveedor</label>
-                    <textarea placeholder="Nombre, NIT, contacto, condiciones..." value={actionForm.supplier_definition || ''} onChange={e => setActionForm({...actionForm, supplier_definition: e.target.value})} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <textarea placeholder="Nombre, NIT, contacto, condiciones..." value={actionForm.supplier_definition || ''} onChange={e => setActionForm({...actionForm, supplier_definition: e.target.value})} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                 </>
               )}
@@ -244,7 +244,7 @@ export default function CompraDetailPage() {
                 <>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">¿Llegó la factura?</label>
-                    <select value={actionForm.invoice_received || ''} onChange={e => setActionForm({...actionForm, invoice_received: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select value={actionForm.invoice_received || ''} onChange={e => setActionForm({...actionForm, invoice_received: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                       <option value="">Seleccionar...</option>
                       <option value="si">Sí</option>
                       <option value="no">No</option>
@@ -252,23 +252,23 @@ export default function CompraDetailPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Monto pagado *</label>
-                    <input type="number" value={actionForm.payment_amount || ''} onChange={e => setActionForm({...actionForm, payment_amount: parseFloat(e.target.value)})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="number" value={actionForm.payment_amount || ''} onChange={e => setActionForm({...actionForm, payment_amount: parseFloat(e.target.value)})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Fecha de pago *</label>
-                    <input type="date" value={actionForm.payment_date || ''} onChange={e => setActionForm({...actionForm, payment_date: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="date" value={actionForm.payment_date || ''} onChange={e => setActionForm({...actionForm, payment_date: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">N° Autorización de pago *</label>
-                    <input value={actionForm.payment_auth_number || ''} onChange={e => setActionForm({...actionForm, payment_auth_number: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input value={actionForm.payment_auth_number || ''} onChange={e => setActionForm({...actionForm, payment_auth_number: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Referencia de pago</label>
-                    <input value={actionForm.payment_reference || ''} onChange={e => setActionForm({...actionForm, payment_reference: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input value={actionForm.payment_reference || ''} onChange={e => setActionForm({...actionForm, payment_reference: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Método de pago</label>
-                    <select value={actionForm.payment_method || ''} onChange={e => setActionForm({...actionForm, payment_method: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select value={actionForm.payment_method || ''} onChange={e => setActionForm({...actionForm, payment_method: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                       <option value="">Seleccionar...</option>
                       <option value="transferencia">Transferencia</option>
                       <option value="cheque">Cheque</option>
@@ -278,15 +278,15 @@ export default function CompraDetailPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Banco</label>
-                    <input value={actionForm.payment_bank || ''} onChange={e => setActionForm({...actionForm, payment_bank: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input value={actionForm.payment_bank || ''} onChange={e => setActionForm({...actionForm, payment_bank: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Cuenta contable del pago</label>
-                    <input value={actionForm.payment_accounting_account || ''} onChange={e => setActionForm({...actionForm, payment_accounting_account: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input value={actionForm.payment_accounting_account || ''} onChange={e => setActionForm({...actionForm, payment_accounting_account: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">URL Factura (adjunto)</label>
-                    <input placeholder="https://..." value={actionForm.invoice_file_url || ''} onChange={e => setActionForm({...actionForm, invoice_file_url: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input placeholder="https://..." value={actionForm.invoice_file_url || ''} onChange={e => setActionForm({...actionForm, invoice_file_url: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                   </div>
                 </>
               )}
@@ -294,7 +294,7 @@ export default function CompraDetailPage() {
               {actionType !== 'rechazar_consejo' && (
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Observaciones</label>
-                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                 </div>
               )}
             </div>
@@ -309,7 +309,7 @@ export default function CompraDetailPage() {
                   pago: 'pagado'
                 }
                 updateCompra({ status: statusMap[actionType], ...actionForm })
-              }} disabled={saving} className="flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+              }} disabled={saving} className="flex-1 bg-orange-700 hover:bg-orange-800 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {saving ? 'Guardando...' : 'Confirmar'}
               </button>
             </div>

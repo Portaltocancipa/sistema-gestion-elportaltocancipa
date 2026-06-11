@@ -68,7 +68,7 @@ export default function ParametrosPage() {
           <h1 className="text-2xl font-bold text-slate-800">Parámetros</h1>
           <p className="text-slate-500 text-sm">Tipos de ticket y tiempos de respuesta</p>
         </div>
-        <button onClick={openCreate} className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <button onClick={openCreate} className="bg-orange-700 hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
           + Nuevo Tipo
         </button>
       </div>
@@ -103,7 +103,7 @@ export default function ParametrosPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 flex gap-2">
-                    <button onClick={() => openEdit(t)} className="text-blue-600 hover:underline text-xs">Editar</button>
+                    <button onClick={() => openEdit(t)} className="text-green-700 hover:underline text-xs">Editar</button>
                     <button onClick={() => handleDelete(t.id)} className="text-red-500 hover:underline text-xs">Eliminar</button>
                   </td>
                 </tr>
@@ -124,23 +124,23 @@ export default function ParametrosPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Nombre *</label>
-                <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Descripción</label>
-                <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Días de respuesta *</label>
-                <input type="number" min={1} value={form.response_days} onChange={e => setForm({...form, response_days: parseInt(e.target.value)})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="number" min={1} value={form.response_days} onChange={e => setForm({...form, response_days: parseInt(e.target.value)})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-2">Destinatarios de correo</label>
                 <div className="flex gap-2 mb-2">
-                  <input placeholder="Nombre" value={newRecipient.recipient_name} onChange={e => setNewRecipient({...newRecipient, recipient_name: e.target.value})} className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input placeholder="Correo" value={newRecipient.email} onChange={e => setNewRecipient({...newRecipient, email: e.target.value})} className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <button onClick={addRecipient} className="bg-blue-700 text-white px-3 py-2 rounded-lg text-xs">+</button>
+                  <input placeholder="Nombre" value={newRecipient.recipient_name} onChange={e => setNewRecipient({...newRecipient, recipient_name: e.target.value})} className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  <input placeholder="Correo" value={newRecipient.email} onChange={e => setNewRecipient({...newRecipient, email: e.target.value})} className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  <button onClick={addRecipient} className="bg-orange-700 text-white px-3 py-2 rounded-lg text-xs">+</button>
                 </div>
                 {form.recipients.length > 0 && (
                   <div className="space-y-1">
@@ -166,7 +166,7 @@ export default function ParametrosPage() {
 
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowModal(false)} className="flex-1 border border-slate-300 text-slate-700 py-2 rounded-lg text-sm hover:bg-slate-50">Cancelar</button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+              <button onClick={handleSave} disabled={saving} className="flex-1 bg-orange-700 hover:bg-orange-800 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {saving ? 'Guardando...' : 'Guardar'}
               </button>
             </div>

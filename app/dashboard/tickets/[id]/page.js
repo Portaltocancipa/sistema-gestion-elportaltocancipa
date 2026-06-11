@@ -59,7 +59,7 @@ export default function TicketDetailPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => router.back()} className="text-blue-600 text-sm mb-4 hover:underline">← Volver</button>
+      <button onClick={() => router.back()} className="text-green-700 text-sm mb-4 hover:underline">← Volver</button>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-4">
         <div className="flex items-start justify-between mb-4">
@@ -113,7 +113,7 @@ export default function TicketDetailPage() {
               onChange={e => setMessage(e.target.value)}
               placeholder="Escribe un mensaje..."
               rows={3}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 mb-2"
             />
             <div className="flex items-center justify-between">
               {!isCopropietario && (
@@ -122,7 +122,7 @@ export default function TicketDetailPage() {
                   Nota interna (no visible para copropietario)
                 </label>
               )}
-              <button onClick={sendMessage} disabled={sending || !message.trim()} className="ml-auto bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-60">
+              <button onClick={sendMessage} disabled={sending || !message.trim()} className="ml-auto bg-orange-700 hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-60">
                 {sending ? 'Enviando...' : 'Enviar'}
               </button>
             </div>

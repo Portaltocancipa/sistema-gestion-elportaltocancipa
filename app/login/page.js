@@ -42,7 +42,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-100">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-green-800 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-white text-2xl font-bold">EP</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-800">El Portal de Tocancipá</h1>
@@ -56,7 +56,7 @@ export default function LoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
               placeholder="Ingresa tu usuario"
               required
             />
@@ -68,7 +68,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
               placeholder="Ingresa tu contraseña"
               required
             />
@@ -83,13 +83,13 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-800 hover:bg-blue-900 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-60"
+            className="w-full bg-orange-700 hover:bg-orange-800 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-60"
           >
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
 
           <p className="text-center text-sm">
-            <Link href="/forgot-password" className="text-blue-700 hover:underline text-sm">¿Olvidaste tu contraseña?</Link>
+            <Link href="/forgot-password" className="text-green-700 hover:underline text-sm">¿Olvidaste tu contraseña?</Link>
           </p>
         </form>
 

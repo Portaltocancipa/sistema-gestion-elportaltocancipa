@@ -72,7 +72,7 @@ export default function UsuariosPage() {
           <h1 className="text-2xl font-bold text-slate-800">Usuarios</h1>
           <p className="text-slate-500 text-sm">Gestión de usuarios del sistema</p>
         </div>
-        <button onClick={openCreate} className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <button onClick={openCreate} className="bg-orange-700 hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
           + Nuevo Usuario
         </button>
       </div>
@@ -84,7 +84,7 @@ export default function UsuariosPage() {
             placeholder="Buscar por nombre o usuario..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="border border-slate-300 rounded-lg px-3 py-2 text-sm w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-slate-300 rounded-lg px-3 py-2 text-sm w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
 
@@ -119,7 +119,7 @@ export default function UsuariosPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 flex gap-2">
-                    <button onClick={() => openEdit(u)} className="text-blue-600 hover:underline text-xs">Editar</button>
+                    <button onClick={() => openEdit(u)} className="text-green-700 hover:underline text-xs">Editar</button>
                     <button onClick={() => handleDelete(u.id)} className="text-red-500 hover:underline text-xs">Eliminar</button>
                   </td>
                 </tr>
@@ -140,34 +140,34 @@ export default function UsuariosPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Nombre completo *</label>
-                <input value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Usuario *</label>
-                <input value={form.username} onChange={e => setForm({...form, username: e.target.value})} disabled={!!editUser} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100" />
+                <input value={form.username} onChange={e => setForm({...form, username: e.target.value})} disabled={!!editUser} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-slate-100" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Correo electrónico</label>
-                <input type="email" value={form.email || ''} onChange={e => setForm({...form, email: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="correo@ejemplo.com" />
+                <input type="email" value={form.email || ''} onChange={e => setForm({...form, email: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="correo@ejemplo.com" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">{editUser ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña *'}</label>
-                <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Perfil *</label>
-                <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                   {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Apartamento</label>
-                  <input value={form.apartment || ''} onChange={e => setForm({...form, apartment: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={form.apartment || ''} onChange={e => setForm({...form, apartment: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Teléfono</label>
-                  <input value={form.phone || ''} onChange={e => setForm({...form, phone: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={form.phone || ''} onChange={e => setForm({...form, phone: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                 </div>
               </div>
               {editUser && (
@@ -182,7 +182,7 @@ export default function UsuariosPage() {
 
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowModal(false)} className="flex-1 border border-slate-300 text-slate-700 py-2 rounded-lg text-sm hover:bg-slate-50">Cancelar</button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+              <button onClick={handleSave} disabled={saving} className="flex-1 bg-orange-700 hover:bg-orange-800 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {saving ? 'Guardando...' : 'Guardar'}
               </button>
             </div>

@@ -62,7 +62,7 @@ export default function DashboardLayout({ children }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-slate-700 ${pathname === item.href ? 'bg-blue-700' : ''}`}
+              className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-slate-700 ${pathname === item.href ? 'bg-green-800' : ''}`}
             >
               <span className="text-lg">{item.icon}</span>
               {sidebarOpen && <span>{item.label}</span>}
