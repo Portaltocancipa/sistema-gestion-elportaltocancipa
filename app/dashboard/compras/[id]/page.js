@@ -62,14 +62,27 @@ export default function CompraDetailPage() {
   const isConsejo = user && ['presidente_consejo','secretario_consejo'].includes(user.role)
   const isAdministrador = user && ['admin_copropiedad','admin_plataforma','vocal_consejo'].includes(user.role)
   const isTesoreria = user && ['tesorero','admin_plataforma'].includes(user.role)
+  const isAdmin = user && ['admin_plataforma','admin_copropiedad'].includes(user.role)
   const esMiSolicitud = compra && user && compra.created_by === user.id
+
+  const eliminarSolicitud = async () => {
+    if (!confirm(`¿Eliminar definitivamente la solicitud ${compra.request_number}? Esta acción no se puede deshacer.`)) return
+    const res = await fetch(`/api/compras/${id}`, { method: 'DELETE' })
+    if (res.ok) router.push('/dashboard/compras')
+    else { const d = await res.json(); alert(d.error || 'Error al eliminar') }
+  }
 
   if (loading) return <div className="p-8 text-center text-slate-400">Cargando...</div>
   if (!compra) return <div className="p-8 text-center text-slate-400">Solicitud no encontrada</div>
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => router.back()} className="text-green-700 text-sm mb-4 hover:underline">← Volver</button>
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={() => router.back()} className="text-green-700 text-sm hover:underline">← Volver</button>
+        {isAdmin && (
+          <button onClick={eliminarSolicitud} className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg">🗑 Eliminar solicitud</button>
+        )}
+      </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-4">
         <div className="flex items-start justify-between mb-4">
