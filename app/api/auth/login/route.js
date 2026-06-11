@@ -3,8 +3,29 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { supabaseAdmin } from '@/lib/supabase'
 
+const loginAttempts = new Map()
+const WINDOW_MS = 15 * 60 * 1000
+const MAX_ATTEMPTS = 10
+
+function checkRateLimit(ip) {
+  const now = Date.now()
+  const rec = loginAttempts.get(ip)
+  if (!rec || now > rec.reset) {
+    loginAttempts.set(ip, { count: 1, reset: now + WINDOW_MS })
+    return true
+  }
+  if (rec.count >= MAX_ATTEMPTS) return false
+  rec.count++
+  return true
+}
+
 export async function POST(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || 'unknown'
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json({ error: 'Demasiados intentos. Intente en 15 minutos.' }, { status: 429 })
+    }
+
     const { username, password } = await request.json()
 
     if (!username || !password) {

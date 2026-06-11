@@ -36,18 +36,23 @@ export default function TicketsPage() {
   const [error, setError] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [user, setUser] = useState(null)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const limit = 20
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user))
-    fetchTickets()
     fetch('/api/parametros').then(r => r.json()).then(d => setTicketTypes(d.data?.filter(t => t.is_active) || []))
   }, [])
 
-  const fetchTickets = async () => {
+  useEffect(() => { fetchTickets(page) }, [page])
+
+  const fetchTickets = async (p = 1) => {
     setLoading(true)
-    const res = await fetch('/api/tickets')
+    const res = await fetch(`/api/tickets?page=${p}&limit=${limit}`)
     const data = await res.json()
     setTickets(data.data || [])
+    setTotal(data.total || 0)
     setLoading(false)
   }
 
@@ -59,7 +64,7 @@ export default function TicketsPage() {
     if (!res.ok) { setError(data.error || 'Error al crear ticket'); setSaving(false); return }
     setShowModal(false)
     setForm({ ticket_type_id: '', title: '', description: '', priority: 'normal', apartment: '' })
-    fetchTickets()
+    fetchTickets(page)
     setSaving(false)
   }
 
@@ -129,6 +134,17 @@ export default function TicketsPage() {
           </table>
         )}
       </div>
+
+      {total > limit && (
+        <div className="flex items-center justify-between mt-4 text-sm text-slate-600">
+          <span>Mostrando {(page - 1) * limit + 1}–{Math.min(page * limit, total)} de {total}</span>
+          <div className="flex gap-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 rounded-lg border border-slate-300 disabled:opacity-40 hover:bg-slate-50">← Anterior</button>
+            <span className="px-3 py-1.5">Página {page} de {Math.ceil(total / limit)}</span>
+            <button onClick={() => setPage(p => p + 1)} disabled={page * limit >= total} className="px-3 py-1.5 rounded-lg border border-slate-300 disabled:opacity-40 hover:bg-slate-50">Siguiente →</button>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">

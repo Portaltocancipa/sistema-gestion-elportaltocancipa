@@ -29,11 +29,27 @@ export async function GET(request, { params }) {
   return NextResponse.json({ data })
 }
 
+const CONSEJO_ROLES = ['presidente_consejo', 'secretario_consejo', 'admin_plataforma', 'admin_copropiedad']
+const COMPRAS_ROLES = ['admin_plataforma', 'admin_copropiedad', 'vocal_consejo', 'tesorero', 'presidente_consejo', 'secretario_consejo']
+const TESORERIA_ROLES = ['tesorero', 'admin_plataforma']
+
 export async function PUT(request, { params }) {
   const user = await getUser()
-  if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  if (!user || user.role === 'copropietario') return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   const { id } = await params
   const body = await request.json()
+
+  if (body.status) {
+    const isConsejo = ['aprobada_consejo', 'rechazada_consejo'].includes(body.status)
+    const isCompras = ['en_analisis', 'proveedor_definido', 'pedido_realizado', 'factura_recibida', 'factura_devuelta'].includes(body.status)
+    const isTesoreria = body.status === 'pagado'
+    if (isConsejo && !CONSEJO_ROLES.includes(user.role))
+      return NextResponse.json({ error: 'Solo el Consejo puede aprobar o rechazar solicitudes' }, { status: 403 })
+    if (isCompras && !COMPRAS_ROLES.includes(user.role))
+      return NextResponse.json({ error: 'No tiene permiso para esta transición de estado' }, { status: 403 })
+    if (isTesoreria && !TESORERIA_ROLES.includes(user.role))
+      return NextResponse.json({ error: 'Solo Tesorería puede registrar pagos' }, { status: 403 })
+  }
 
   const { data: current } = await supabaseAdmin
     .from('purchase_requests')

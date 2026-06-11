@@ -34,6 +34,12 @@ export async function POST(request) {
   if (!username || !password || !full_name || !role) {
     return NextResponse.json({ error: 'Campos requeridos incompletos' }, { status: 400 })
   }
+  if (password.length < 8) {
+    return NextResponse.json({ error: 'La contraseña debe tener mínimo 8 caracteres' }, { status: 400 })
+  }
+  if (!/\d/.test(password)) {
+    return NextResponse.json({ error: 'La contraseña debe contener al menos un número' }, { status: 400 })
+  }
   const password_hash = await bcrypt.hash(password, 10)
   const { data, error } = await supabaseAdmin
     .from('profiles')

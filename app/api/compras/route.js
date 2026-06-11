@@ -19,15 +19,20 @@ async function getEmailsByRoles(roles) {
   return data?.filter(u => u.email) || []
 }
 
-export async function GET() {
+export async function GET(request) {
   const user = await getUser()
   if (!user || !VER_ROLES.includes(user.role)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
-  const { data, error } = await supabaseAdmin
+  const { searchParams } = new URL(request.url)
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')))
+  const offset = (page - 1) * limit
+  const { data, error, count } = await supabaseAdmin
     .from('purchase_requests')
-    .select('*, profiles!purchase_requests_created_by_fkey(full_name, role)')
+    .select('*, profiles!purchase_requests_created_by_fkey(full_name, role)', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
+  return NextResponse.json({ data, total: count, page, limit })
 }
 
 export async function POST(request) {

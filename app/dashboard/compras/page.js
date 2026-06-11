@@ -29,16 +29,20 @@ export default function ComprasPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const limit = 20
 
-  const fetchCompras = async () => {
+  const fetchCompras = async (p = 1) => {
     setLoading(true)
-    const res = await fetch('/api/compras')
+    const res = await fetch(`/api/compras?page=${p}&limit=${limit}`)
     const data = await res.json()
     setCompras(data.data || [])
+    setTotal(data.total || 0)
     setLoading(false)
   }
 
-  useEffect(() => { fetchCompras() }, [])
+  useEffect(() => { fetchCompras(page) }, [page])
 
   const handleCreate = async () => {
     setSaving(true)
@@ -48,7 +52,7 @@ export default function ComprasPage() {
     if (!res.ok) { setError(data.error || 'Error al crear'); setSaving(false); return }
     setShowModal(false)
     setForm(emptyForm)
-    fetchCompras()
+    fetchCompras(page)
     setSaving(false)
   }
 
@@ -104,6 +108,17 @@ export default function ComprasPage() {
           </table>
         )}
       </div>
+
+      {total > limit && (
+        <div className="flex items-center justify-between mt-4 text-sm text-slate-600">
+          <span>Mostrando {(page - 1) * limit + 1}–{Math.min(page * limit, total)} de {total}</span>
+          <div className="flex gap-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 rounded-lg border border-slate-300 disabled:opacity-40 hover:bg-slate-50">← Anterior</button>
+            <span className="px-3 py-1.5">Página {page} de {Math.ceil(total / limit)}</span>
+            <button onClick={() => setPage(p => p + 1)} disabled={page * limit >= total} className="px-3 py-1.5 rounded-lg border border-slate-300 disabled:opacity-40 hover:bg-slate-50">Siguiente →</button>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">

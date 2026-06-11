@@ -1,15 +1,15 @@
 import { useEffect, useRef } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export function useRealtime(table, callback) {
-  const intervalRef = useRef(null)
+  const cbRef = useRef(callback)
+  cbRef.current = callback
 
   useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      callback()
-    }, 10000)
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [])
+    const channel = supabase
+      .channel(`rt-${table}-${Date.now()}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table }, () => cbRef.current())
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [table])
 }
