@@ -11,7 +11,7 @@ async function getUser() {
   try { return jwt.verify(token, process.env.JWT_SECRET) } catch { return null }
 }
 
-const CREAR_ROLES = ['admin_copropiedad','presidente_consejo']
+const CREAR_ROLES = ['admin_copropiedad','presidente_consejo','contador']
 const VER_ROLES = ['admin_plataforma','admin_copropiedad','contador','tesorero','presidente_consejo','secretario_consejo','vocal_consejo']
 
 async function getEmailsByRoles(roles) {
