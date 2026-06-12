@@ -115,11 +115,15 @@ export default function TicketsPage() {
   const [myTotal, setMyTotal] = useState(0)
   const [myPage, setMyPage] = useState(1)
 
+  // Encuestas pendientes
+  const [pendingSurveys, setPendingSurveys] = useState([])
+
   // Modal crear
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ ticket_type_id: '', title: '', description: '', apartment: '', assigned_to: '' })
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
+  const [exporting, setExporting] = useState(false)
 
   const LIMIT = 20
 
@@ -128,10 +132,12 @@ export default function TicketsPage() {
       fetch('/api/auth/me').then(r => r.json()),
       fetch('/api/parametros').then(r => r.json()),
       fetch('/api/usuarios/asignables').then(r => r.json()),
-    ]).then(([me, params, asig]) => {
+      fetch('/api/tickets?survey_pending=true').then(r => r.json()),
+    ]).then(([me, params, asig, surveys]) => {
       setUser(me.user)
       setTicketTypes(params.data?.filter(t => t.is_active) || [])
       setAsignables(asig.data || [])
+      setPendingSurveys(surveys.data || [])
     })
   }, [])
 
@@ -176,7 +182,39 @@ export default function TicketsPage() {
   useEffect(() => { if (user && user.role !== 'copropietario') fetchAll(allPage) }, [allPage])
   useEffect(() => { if (user && user.role === 'copropietario') fetchMy(myPage) }, [myPage])
 
+  const handleExport = async () => {
+    setExporting(true)
+    const view = isCopropietario ? '' : 'all'
+    const res = await fetch(`/api/tickets?export=true&view=${view}`)
+    const d = await res.json()
+    const rows = (d.data || []).map(t => ({
+      'N° Ticket': t.ticket_number,
+      'Título': t.title,
+      'Tipo': t.ticket_types?.name || '-',
+      'Torre - Apto': t.apartment || '-',
+      'Solicitante': t.profiles?.full_name || '-',
+      'Dirigido a': t.assigned?.full_name || '-',
+      'Estado': statusLabels[t.status] || t.status,
+      'Días transcurridos': calcDias(t),
+      'Fecha vencimiento': t.due_date || '-',
+      'Fecha creación': new Date(t.created_at).toLocaleDateString('es-CO'),
+      'Encuesta completada': t.survey_completed_at ? 'Sí' : 'No',
+      'Satisfecho': t.survey_satisfied != null ? (t.survey_satisfied ? 'Sí' : 'No') : '-',
+      'Calificación': t.survey_rating || '-',
+    }))
+    const XLSX = (await import('xlsx')).default
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Tickets')
+    XLSX.writeFile(wb, `tickets_${new Date().toISOString().split('T')[0]}.xlsx`)
+    setExporting(false)
+  }
+
   const handleCreate = async () => {
+    if (pendingSurveys.length > 0) {
+      setFormError(`Tiene ${pendingSurveys.length} encuesta(s) pendiente(s). Respóndalas antes de crear un nuevo ticket.`)
+      return
+    }
     if (!form.ticket_type_id || !form.title.trim() || !form.description.trim() || !form.apartment.trim() || !form.assigned_to) {
       setFormError('Todos los campos son obligatorios'); return
     }
@@ -210,10 +248,36 @@ export default function TicketsPage() {
           <h1 className="text-2xl font-bold text-slate-800">Tickets</h1>
           <p className="text-slate-500 text-sm">Gestión de solicitudes y atención</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="bg-orange-700 hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
-          + Nuevo Ticket
-        </button>
+        <div className="flex gap-2">
+          <button onClick={handleExport} disabled={exporting} className="border border-green-700 text-green-700 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+            {exporting ? 'Exportando...' : '⬇ Excel'}
+          </button>
+          <button
+            onClick={() => { if (pendingSurveys.length > 0) { alert(`Tiene ${pendingSurveys.length} encuesta(s) de satisfacción pendiente(s). Respóndalas antes de crear un nuevo ticket.`); return } setShowModal(true) }}
+            className="bg-orange-700 hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            + Nuevo Ticket
+          </button>
+        </div>
       </div>
+
+      {/* Banner encuestas pendientes */}
+      {pendingSurveys.length > 0 && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl px-5 py-4 flex items-start gap-3">
+          <span className="text-xl flex-shrink-0">⚠️</span>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Tiene {pendingSurveys.length} encuesta(s) de satisfacción pendiente(s)</p>
+            <p className="text-xs text-amber-700 mt-0.5">Debe responderlas antes de crear nuevos tickets.</p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {pendingSurveys.map(s => (
+                <a key={s.id} href={`/dashboard/tickets/${s.id}`} className="text-xs bg-amber-100 border border-amber-300 text-amber-800 px-2 py-1 rounded hover:bg-amber-200">
+                  {s.ticket_number} — {s.title}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Vista copropietario — solo sus tickets */}
       {isCopropietario && (

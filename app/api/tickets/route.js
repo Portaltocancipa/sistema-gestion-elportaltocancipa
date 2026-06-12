@@ -15,34 +15,51 @@ export async function GET(request) {
   const user = await getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   const { searchParams } = new URL(request.url)
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')))
-  const offset = (page - 1) * limit
+
+  // Encuestas pendientes — respuesta rápida sin paginar
+  if (searchParams.get('survey_pending') === 'true') {
+    const { data } = await supabaseAdmin
+      .from('tickets')
+      .select('id, ticket_number, title')
+      .eq('created_by', user.id)
+      .in('status', ['resuelto', 'cerrado'])
+      .is('survey_completed_at', null)
+    return NextResponse.json({ data: data || [] })
+  }
+
+  const view = searchParams.get('view')
   const assignedFilter = searchParams.get('assigned_filter')
+  const isExport = searchParams.get('export') === 'true'
+
+  const selectFields = '*, ticket_types(name), profiles!tickets_created_by_fkey(full_name, apartment), assigned:profiles!tickets_assigned_to_fkey(full_name)'
 
   let query = supabaseAdmin
     .from('tickets')
-    .select('*, ticket_types(name), profiles!tickets_created_by_fkey(full_name, apartment), assigned:profiles!tickets_assigned_to_fkey(full_name)', { count: 'exact' })
+    .select(selectFields, { count: 'exact' })
     .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1)
 
-  const view = searchParams.get('view')
+  if (!isExport) {
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')))
+    query = query.range((page - 1) * limit, page * limit - 1)
+  }
 
   if (user.role === 'copropietario') {
     query = query.eq('created_by', user.id)
   } else if (view === 'mios') {
     query = query.eq('assigned_to', user.id)
   } else if (view === 'all') {
-    // sin filtro — todos los tickets
     if (assignedFilter) query = query.eq('assigned_to', assignedFilter)
   } else {
-    // default: por rol
     if (user.role !== 'admin_plataforma') query = query.eq('assigned_to', user.id)
     else if (assignedFilter) query = query.eq('assigned_to', assignedFilter)
   }
 
   const { data, error, count } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')))
   return NextResponse.json({ data, total: count, page, limit })
 }
 
@@ -55,6 +72,22 @@ export async function POST(request) {
 
   if (!ticket_type_id || !title || !description || !apartment || !assigned_to) {
     return NextResponse.json({ error: 'Todos los campos son obligatorios' }, { status: 400 })
+  }
+
+  // Bloquear si hay encuestas pendientes
+  const { data: pending } = await supabaseAdmin
+    .from('tickets')
+    .select('id, ticket_number')
+    .eq('created_by', user.id)
+    .in('status', ['resuelto', 'cerrado'])
+    .is('survey_completed_at', null)
+    .limit(5)
+
+  if (pending?.length > 0) {
+    return NextResponse.json({
+      error: `Tiene ${pending.length} encuesta(s) de satisfacción pendiente(s). Respóndalas antes de crear nuevos tickets.`,
+      pendingSurveys: pending
+    }, { status: 400 })
   }
 
   const [{ data: ticketType }, { data: assignee }] = await Promise.all([

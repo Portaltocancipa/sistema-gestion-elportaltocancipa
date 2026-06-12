@@ -33,6 +33,7 @@ export default function ComprasPage() {
   const [total, setTotal] = useState(0)
   const [user, setUser] = useState(null)
   const [categorias, setCategorias] = useState([])
+  const [exporting, setExporting] = useState(false)
   const limit = 20
 
   useEffect(() => {
@@ -66,6 +67,39 @@ export default function ComprasPage() {
     setSaving(false)
   }
 
+  const handleExport = async () => {
+    setExporting(true)
+    const res = await fetch('/api/compras?export=true')
+    const d = await res.json()
+    const rows = (d.data || []).map(c => ({
+      'N° Solicitud': c.request_number,
+      'Título': c.title,
+      'Categoría': c.category || '-',
+      'Solicitante': c.profiles?.full_name || '-',
+      'Descripción': c.description || '-',
+      'Justificación': c.justification || '-',
+      'Cantidad': c.quantity,
+      'Unidad': c.unit,
+      'Valor Unitario': c.estimated_value || 0,
+      'Monto Solicitado': c.estimated_total || 0,
+      'Monto Aprobado': c.max_budget || '-',
+      'Cuenta Contable': c.accounting_account || '-',
+      'Estado': statusLabels[c.status] || c.status,
+      'Método Pago': c.payment_method || '-',
+      'Monto Pagado': c.payment_amount || '-',
+      'Banco Destino': c.payment_bank || '-',
+      'Fecha Reunión Consejo': c.council_meeting_date || '-',
+      'Asistentes Consejo': (c.council_attendees || []).join(', ') || '-',
+      'Fecha Creación': new Date(c.created_at).toLocaleDateString('es-CO'),
+    }))
+    const XLSX = (await import('xlsx')).default
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Compras')
+    XLSX.writeFile(wb, `compras_${new Date().toISOString().split('T')[0]}.xlsx`)
+    setExporting(false)
+  }
+
   const filtered = filterStatus ? compras.filter(c => c.status === filterStatus) : compras
   const puedeCrear = user && CREAR_ROLES.includes(user.role)
 
@@ -76,11 +110,16 @@ export default function ComprasPage() {
           <h1 className="text-2xl font-bold text-slate-800">Solicitudes de Compra</h1>
           <p className="text-slate-500 text-sm">Gestión del proceso de compras</p>
         </div>
-        {puedeCrear && (
-          <button onClick={() => { setShowModal(true); setError('') }} className="bg-orange-700 hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
-            + Nueva Solicitud
+        <div className="flex gap-2">
+          <button onClick={handleExport} disabled={exporting} className="border border-green-700 text-green-700 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+            {exporting ? 'Exportando...' : '⬇ Excel'}
           </button>
-        )}
+          {puedeCrear && (
+            <button onClick={() => { setShowModal(true); setError('') }} className="bg-orange-700 hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              + Nueva Solicitud
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-2 mb-4 flex-wrap">
