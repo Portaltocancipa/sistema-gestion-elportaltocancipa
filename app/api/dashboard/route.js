@@ -10,9 +10,11 @@ async function getUser() {
   try { return jwt.verify(token, process.env.JWT_SECRET) } catch { return null }
 }
 
-export async function GET() {
+export async function GET(request) {
   const user = await getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  const { searchParams } = new URL(request.url)
+  const view = searchParams.get('view')
 
   const COMPRAS_ROLES = ['admin_plataforma','admin_copropiedad','contador','tesorero','presidente_consejo','secretario_consejo','vocal_consejo']
   if (!COMPRAS_ROLES.includes(user.role)) {
@@ -46,6 +48,8 @@ export async function GET() {
     .select('id, status, priority, created_at')
   if (user.role === 'copropietario') {
     ticketQuery = ticketQuery.eq('created_by', user.id)
+  } else if (view === 'mios') {
+    ticketQuery = ticketQuery.eq('assigned_to', user.id)
   }
   const { data: tickets } = await ticketQuery
 

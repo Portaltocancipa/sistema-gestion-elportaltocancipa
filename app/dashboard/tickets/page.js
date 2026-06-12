@@ -19,11 +19,28 @@ const statusLabels = {
   cerrado: 'Cerrado',
 }
 
-const priorityColors = {
-  baja: 'bg-slate-100 text-slate-600',
-  normal: 'bg-blue-100 text-blue-600',
-  alta: 'bg-orange-100 text-orange-600',
-  urgente: 'bg-red-100 text-red-600',
+const roleLabels = {
+  admin_copropiedad: 'Administrador',
+  presidente_consejo: 'Presidente Consejo',
+  secretario_consejo: 'Secretario',
+  vocal_consejo: 'Vocal',
+  contador: 'Contador',
+  tesorero: 'Tesorero',
+  convivencia: 'Convivencia',
+}
+
+function calcDias(t) {
+  const start = new Date(t.created_at)
+  const end = t.closed_at ? new Date(t.closed_at) : t.resolved_at ? new Date(t.resolved_at) : new Date()
+  return Math.ceil((end - start) / (1000 * 60 * 60 * 24))
+}
+
+function diasColor(t) {
+  if (['cerrado', 'resuelto'].includes(t.status)) {
+    const end = new Date(t.closed_at || t.resolved_at)
+    return end <= new Date(t.due_date) ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'
+  }
+  return new Date() > new Date(t.due_date) ? 'text-red-600 font-semibold' : 'text-orange-500'
 }
 
 export default function TicketsPage() {
@@ -36,20 +53,11 @@ export default function TicketsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  const [filterAssigned, setFilterAssigned] = useState('')
   const [user, setUser] = useState(null)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const limit = 20
-
-  const roleLabels = {
-    admin_copropiedad: 'Administrador',
-    presidente_consejo: 'Presidente Consejo',
-    secretario_consejo: 'Secretario',
-    vocal_consejo: 'Vocal',
-    contador: 'Contador',
-    tesorero: 'Tesorero',
-    convivencia: 'Convivencia',
-  }
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user))
@@ -57,11 +65,14 @@ export default function TicketsPage() {
     fetch('/api/usuarios/asignables').then(r => r.json()).then(d => setAsignables(d.data || []))
   }, [])
 
-  useEffect(() => { fetchTickets(page) }, [page])
+  useEffect(() => { if (user) fetchTickets(1) }, [filterAssigned, user])
+  useEffect(() => { if (user) fetchTickets(page) }, [page])
 
   const fetchTickets = async (p = 1) => {
     setLoading(true)
-    const res = await fetch(`/api/tickets?page=${p}&limit=${limit}`)
+    const params = new URLSearchParams({ page: p, limit })
+    if (filterAssigned && user?.role === 'admin_plataforma') params.set('assigned_filter', filterAssigned)
+    const res = await fetch(`/api/tickets?${params}`)
     const data = await res.json()
     setTickets(data.data || [])
     setTotal(data.total || 0)
@@ -84,10 +95,18 @@ export default function TicketsPage() {
     setSaving(false)
   }
 
+  const handleDelete = async (id, num) => {
+    if (!confirm(`¿Eliminar el ticket ${num}? Esta acción no se puede deshacer.`)) return
+    const res = await fetch(`/api/tickets/${id}`, { method: 'DELETE' })
+    if (res.ok) fetchTickets(page)
+    else { const d = await res.json(); alert(d.error || 'Error al eliminar') }
+  }
+
   const selectedType = ticketTypes.find(t => t.id === form.ticket_type_id)
   const selectedAsignado = asignables.find(a => a.id === form.assigned_to)
 
   const filtered = filterStatus ? tickets.filter(t => t.status === filterStatus) : tickets
+  const isAdmin = user?.role === 'admin_plataforma'
 
   return (
     <div className="p-6">
@@ -101,13 +120,27 @@ export default function TicketsPage() {
         </button>
       </div>
 
-      <div className="flex gap-2 mb-4 flex-wrap">
+      {/* Filtros */}
+      <div className="flex gap-2 mb-4 flex-wrap items-center">
         {['', 'abierto', 'en_gestion', 'pendiente_info', 'resuelto', 'cerrado'].map(s => (
           <button key={s} onClick={() => setFilterStatus(s)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${filterStatus === s ? 'bg-green-800 text-white border-green-800' : 'bg-white text-slate-600 border-slate-300 hover:border-green-600'}`}>
             {s === '' ? 'Todos' : statusLabels[s]}
           </button>
         ))}
+
+        {isAdmin && (
+          <select
+            value={filterAssigned}
+            onChange={e => { setFilterAssigned(e.target.value); setPage(1) }}
+            className="ml-auto border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+          >
+            <option value="">Todos los asignados</option>
+            {asignables.map(a => (
+              <option key={a.id} value={a.id}>{a.full_name} — {roleLabels[a.role] || a.role}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -123,27 +156,37 @@ export default function TicketsPage() {
                 <th className="px-4 py-3 font-medium">Solicitante</th>
                 <th className="px-4 py-3 font-medium">Dirigido a</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Vence</th>
+                <th className="px-4 py-3 font-medium">Días</th>
                 <th className="px-4 py-3 font-medium">Acción</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map(t => (
-                <tr key={t.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-mono text-xs text-slate-600">{t.ticket_number}</td>
-                  <td className="px-4 py-3 font-medium text-slate-800 max-w-xs truncate">{t.title}</td>
-                  <td className="px-4 py-3 text-slate-600">{t.ticket_types?.name || '-'}</td>
-                  <td className="px-4 py-3 text-slate-600">{t.profiles?.full_name || '-'}</td>
-                  <td className="px-4 py-3 text-slate-600">{t.assigned?.full_name || '-'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs ${statusColors[t.status]}`}>{statusLabels[t.status]}</span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600 text-xs">{t.due_date || '-'}</td>
-                  <td className="px-4 py-3">
-                    <Link href={`/dashboard/tickets/${t.id}`} className="text-green-700 hover:underline text-xs">Ver</Link>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map(t => {
+                const dias = calcDias(t)
+                const dc = diasColor(t)
+                return (
+                  <tr key={t.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono text-xs text-slate-600">{t.ticket_number}</td>
+                    <td className="px-4 py-3 font-medium text-slate-800 max-w-xs truncate">{t.title}</td>
+                    <td className="px-4 py-3 text-slate-600">{t.ticket_types?.name || '-'}</td>
+                    <td className="px-4 py-3 text-slate-600">{t.profiles?.full_name || '-'}</td>
+                    <td className="px-4 py-3 text-slate-600">{t.assigned?.full_name || '-'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs ${statusColors[t.status]}`}>{statusLabels[t.status]}</span>
+                    </td>
+                    <td className={`px-4 py-3 text-xs ${dc}`}>
+                      {dias}d
+                      {['cerrado','resuelto'].includes(t.status) ? '' : ' ▲'}
+                    </td>
+                    <td className="px-4 py-3 flex items-center gap-3">
+                      <Link href={`/dashboard/tickets/${t.id}`} className="text-green-700 hover:underline text-xs">Ver</Link>
+                      {isAdmin && (
+                        <button onClick={() => handleDelete(t.id, t.ticket_number)} className="text-red-500 hover:text-red-700 text-xs">Borrar</button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
               {filtered.length === 0 && (
                 <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">No hay tickets</td></tr>
               )}
@@ -165,51 +208,53 @@ export default function TicketsPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg">
-            <h2 className="text-lg font-bold text-slate-800 mb-4">Nuevo Ticket</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Tipo de solicitud *</label>
-                <select value={form.ticket_type_id} onChange={e => setForm({...form, ticket_type_id: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                  <option value="">Seleccionar...</option>
-                  {ticketTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
-                {selectedType?.response_days && (
-                  <p className="text-xs text-green-700 mt-1.5 bg-green-50 border border-green-200 rounded px-2 py-1">
-                    ⏱ Tiempo de respuesta: <strong>{selectedType.response_days} día{selectedType.response_days !== 1 ? 's' : ''}</strong> hábiles
-                  </p>
-                )}
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col max-h-[90vh]">
+            <div className="p-6 overflow-y-auto flex-1">
+              <h2 className="text-lg font-bold text-slate-800 mb-4">Nuevo Ticket</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Tipo de solicitud *</label>
+                  <select value={form.ticket_type_id} onChange={e => setForm({...form, ticket_type_id: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <option value="">Seleccionar...</option>
+                    {ticketTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                  {selectedType?.response_days && (
+                    <p className="text-xs text-green-700 mt-1.5 bg-green-50 border border-green-200 rounded px-2 py-1">
+                      ⏱ Tiempo de respuesta: <strong>{selectedType.response_days} día{selectedType.response_days !== 1 ? 's' : ''}</strong> hábiles
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Torre - Apartamento *</label>
+                  <input placeholder="Ej: 3-202" value={form.apartment} onChange={e => setForm({...form, apartment: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Título *</label>
+                  <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Descripción *</label>
+                  <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Dirigido a *</label>
+                  <select value={form.assigned_to} onChange={e => setForm({...form, assigned_to: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <option value="">Seleccionar persona...</option>
+                    {asignables.map(a => (
+                      <option key={a.id} value={a.id}>{a.full_name} — {roleLabels[a.role] || a.role}</option>
+                    ))}
+                  </select>
+                  {selectedAsignado && (
+                    <p className="text-xs text-slate-600 mt-1.5 bg-slate-50 border border-slate-200 rounded px-2 py-1">
+                      👤 <strong>{selectedAsignado.full_name}</strong> · {roleLabels[selectedAsignado.role] || selectedAsignado.role}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Torre - Apartamento *</label>
-                <input placeholder="Ej: 3-202" value={form.apartment} onChange={e => setForm({...form, apartment: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Título *</label>
-                <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Descripción *</label>
-                <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Dirigido a *</label>
-                <select value={form.assigned_to} onChange={e => setForm({...form, assigned_to: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                  <option value="">Seleccionar persona...</option>
-                  {asignables.map(a => (
-                    <option key={a.id} value={a.id}>{a.full_name} — {roleLabels[a.role] || a.role}</option>
-                  ))}
-                </select>
-                {selectedAsignado && (
-                  <p className="text-xs text-slate-600 mt-1.5 bg-slate-50 border border-slate-200 rounded px-2 py-1">
-                    👤 <strong>{selectedAsignado.full_name}</strong> · {roleLabels[selectedAsignado.role] || selectedAsignado.role}
-                  </p>
-                )}
-              </div>
+              {error && <div className="mt-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{error}</div>}
             </div>
-            {error && <div className="mt-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{error}</div>}
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowModal(false)} className="flex-1 border border-slate-300 text-slate-700 py-2 rounded-lg text-sm hover:bg-slate-50">Cancelar</button>
+            <div className="flex gap-3 p-6 pt-4 border-t border-slate-100">
+              <button onClick={() => { setShowModal(false); setError('') }} className="flex-1 border border-slate-300 text-slate-700 py-2 rounded-lg text-sm hover:bg-slate-50">Cancelar</button>
               <button onClick={handleCreate} disabled={saving} className="flex-1 bg-orange-700 hover:bg-orange-800 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {saving ? 'Creando...' : 'Crear Ticket'}
               </button>

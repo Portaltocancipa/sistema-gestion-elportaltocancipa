@@ -56,6 +56,9 @@ export default function EstadisticasPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState(null)
   const [userRole, setUserRole] = useState(null)
+  const [ticketView, setTicketView] = useState('general')
+  const [ticketDataMios, setTicketDataMios] = useState(null)
+  const [loadingMios, setLoadingMios] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -70,6 +73,16 @@ export default function EstadisticasPage() {
     }).catch(() => setLoading(false))
   }, [])
 
+  const handleTicketView = async (view) => {
+    setTicketView(view)
+    if (view === 'mios' && !ticketDataMios) {
+      setLoadingMios(true)
+      const d = await fetch('/api/dashboard?view=mios').then(r => r.json())
+      setTicketDataMios(d.tickets)
+      setLoadingMios(false)
+    }
+  }
+
   if (loading || !tab) return (
     <div className="p-8 flex items-center justify-center min-h-96">
       <div className="text-center">
@@ -81,7 +94,8 @@ export default function EstadisticasPage() {
 
   if (!data) return <div className="p-8 text-center text-slate-400">No se pudieron cargar los datos</div>
 
-  const { compras: c, tickets: t } = data
+  const { compras: c, tickets: tGeneral } = data
+  const t = (userRole === 'admin_plataforma' && ticketView === 'mios') ? (ticketDataMios || tGeneral) : tGeneral
   const puedeVerCompras = COMPRAS_ROLES.includes(userRole)
 
   return (
@@ -213,11 +227,32 @@ export default function EstadisticasPage() {
 
       {tab === 'tickets' && t && (
         <>
+          {userRole === 'admin_plataforma' && (
+            <div className="flex gap-2 bg-slate-100 p-1 rounded-lg w-fit">
+              <button
+                onClick={() => handleTicketView('general')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${ticketView === 'general' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                📊 Vista General
+              </button>
+              <button
+                onClick={() => handleTicketView('mios')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${ticketView === 'mios' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                👤 Asignados a mí
+              </button>
+            </div>
+          )}
+
+          {loadingMios ? (
+            <div className="text-center py-8 text-slate-400 text-sm">Cargando mis tickets...</div>
+          ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <KpiCard icon="🎫" label="Total Tickets" value={t.totalTickets} color="slate" />
+            <KpiCard icon="🎫" label={ticketView === 'mios' ? 'Mis Tickets' : 'Total Tickets'} value={t.totalTickets} color="slate" />
             <KpiCard icon="🔓" label="Abiertos / En Gestión" value={t.ticketsAbiertos} color="orange" />
             <KpiCard icon="🚨" label="Urgentes" value={t.ticketsUrgentes} color="red" />
           </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl border border-slate-200 p-5">

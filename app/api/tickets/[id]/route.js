@@ -59,3 +59,13 @@ export async function PUT(request, { params }) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ data })
 }
+
+export async function DELETE(request, { params }) {
+  const user = await getUser()
+  if (!user || user.role !== 'admin_plataforma')
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  const { id } = await params
+  const { error } = await supabaseAdmin.from('tickets').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
+}

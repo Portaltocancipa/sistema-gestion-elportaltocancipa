@@ -18,6 +18,7 @@ export async function GET(request) {
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')))
   const offset = (page - 1) * limit
+  const assignedFilter = searchParams.get('assigned_filter')
 
   let query = supabaseAdmin
     .from('tickets')
@@ -29,6 +30,8 @@ export async function GET(request) {
     query = query.eq('created_by', user.id)
   } else if (user.role !== 'admin_plataforma') {
     query = query.eq('assigned_to', user.id)
+  } else if (assignedFilter) {
+    query = query.eq('assigned_to', assignedFilter)
   }
 
   const { data, error, count } = await query
