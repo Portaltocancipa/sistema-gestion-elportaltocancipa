@@ -4,22 +4,22 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 const statusLabels = {
-  borrador: 'Borrador', enviada: 'Enviada', aprobada_consejo: 'Aprobada', rechazada_consejo: 'Rechazada',
-  en_analisis: 'En Análisis', proveedor_definido: 'Proveedor Def.', pedido_realizado: 'Pedido Realizado',
-  factura_recibida: 'Factura Recibida', factura_devuelta: 'Factura Devuelta', pagado: 'Pagado'
+  enviada: 'Enviada', aprobada_consejo: 'Aprobada', rechazada_consejo: 'Rechazada',
+  compra_directa: 'Compra Directa', proveedor_definido: 'En Gestión',
+  factura_recibida: 'Factura Recibida', factura_devuelta: 'Factura Devuelta',
+  pagado: 'Pagado', retirada: 'Retirada'
 }
 
 const statusColors = {
-  borrador: 'bg-slate-100 text-slate-600', enviada: 'bg-blue-100 text-blue-700',
-  aprobada_consejo: 'bg-green-100 text-green-700', rechazada_consejo: 'bg-red-100 text-red-700',
-  en_analisis: 'bg-yellow-100 text-yellow-700', proveedor_definido: 'bg-purple-100 text-purple-700',
-  pedido_realizado: 'bg-indigo-100 text-indigo-700', factura_recibida: 'bg-orange-100 text-orange-700',
-  factura_devuelta: 'bg-red-100 text-red-600', pagado: 'bg-green-100 text-green-800'
+  enviada: 'bg-blue-100 text-blue-700', aprobada_consejo: 'bg-green-100 text-green-700',
+  rechazada_consejo: 'bg-red-100 text-red-700', compra_directa: 'bg-amber-100 text-amber-700',
+  proveedor_definido: 'bg-purple-100 text-purple-700', factura_recibida: 'bg-orange-100 text-orange-700',
+  factura_devuelta: 'bg-red-100 text-red-600', pagado: 'bg-green-100 text-green-800',
+  retirada: 'bg-slate-100 text-slate-500'
 }
 
-const categorias = ['Mantenimiento','Aseo','Servicios Públicos','Seguridad','Administración','Zonas Comunes','Equipos','Otros']
-
-const emptyForm = { title: '', description: '', justification: '', category: '', accounting_account: '', quantity: 1, unit: 'und', estimated_value: 0, priority: 'normal' }
+const CREAR_ROLES = ['admin_copropiedad','presidente_consejo','contador']
+const emptyForm = { title: '', description: '', justification: '', category: '', quantity: 1, unit: 'und', estimated_value: 0 }
 
 export default function ComprasPage() {
   const [compras, setCompras] = useState([])
@@ -31,7 +31,19 @@ export default function ComprasPage() {
   const [filterStatus, setFilterStatus] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [user, setUser] = useState(null)
+  const [categorias, setCategorias] = useState([])
   const limit = 20
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user))
+    fetch('/api/categorias?show_in_compras=true')
+      .then(r => r.json())
+      .then(d => setCategorias(d.data || []))
+      .catch(() => setCategorias([]))
+  }, [])
+
+  useEffect(() => { fetchCompras(page) }, [page])
 
   const fetchCompras = async (p = 1) => {
     setLoading(true)
@@ -41,8 +53,6 @@ export default function ComprasPage() {
     setTotal(data.total || 0)
     setLoading(false)
   }
-
-  useEffect(() => { fetchCompras(page) }, [page])
 
   const handleCreate = async () => {
     setSaving(true)
@@ -57,6 +67,7 @@ export default function ComprasPage() {
   }
 
   const filtered = filterStatus ? compras.filter(c => c.status === filterStatus) : compras
+  const puedeCrear = user && CREAR_ROLES.includes(user.role)
 
   return (
     <div className="p-6">
@@ -65,9 +76,11 @@ export default function ComprasPage() {
           <h1 className="text-2xl font-bold text-slate-800">Solicitudes de Compra</h1>
           <p className="text-slate-500 text-sm">Gestión del proceso de compras</p>
         </div>
-        <button onClick={() => { setShowModal(true); setError('') }} className="bg-orange-700 hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
-          + Nueva Solicitud
-        </button>
+        {puedeCrear && (
+          <button onClick={() => { setShowModal(true); setError('') }} className="bg-orange-700 hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            + Nueva Solicitud
+          </button>
+        )}
       </div>
 
       <div className="flex gap-2 mb-4 flex-wrap">
@@ -86,7 +99,7 @@ export default function ComprasPage() {
                 <th className="px-4 py-3 font-medium">Título</th>
                 <th className="px-4 py-3 font-medium">Categoría</th>
                 <th className="px-4 py-3 font-medium">Solicitante</th>
-                <th className="px-4 py-3 font-medium">Valor Est.</th>
+                <th className="px-4 py-3 font-medium">Monto Solicitado</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
                 <th className="px-4 py-3 font-medium">Acción</th>
               </tr>
@@ -99,7 +112,7 @@ export default function ComprasPage() {
                   <td className="px-4 py-3 text-slate-600">{c.category}</td>
                   <td className="px-4 py-3 text-slate-600">{c.profiles?.full_name || '-'}</td>
                   <td className="px-4 py-3 text-slate-600">{c.estimated_total ? `$${c.estimated_total.toLocaleString('es-CO')}` : '-'}</td>
-                  <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${statusColors[c.status]}`}>{statusLabels[c.status]}</span></td>
+                  <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs ${statusColors[c.status] || 'bg-slate-100 text-slate-600'}`}>{statusLabels[c.status] || c.status}</span></td>
                   <td className="px-4 py-3"><Link href={`/dashboard/compras/${c.id}`} className="text-green-700 hover:underline text-xs">Ver</Link></td>
                 </tr>
               ))}
@@ -130,25 +143,19 @@ export default function ComprasPage() {
                 <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Descripción del bien/servicio *</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Descripción del bien o servicio *</label>
                 <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Justificación *</label>
                 <textarea value={form.justification} onChange={e => setForm({...form, justification: e.target.value})} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Categoría *</label>
-                  <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                    <option value="">Seleccionar...</option>
-                    {categorias.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Cuenta contable</label>
-                  <input value={form.accounting_account} onChange={e => setForm({...form, accounting_account: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-                </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Categoría *</label>
+                <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <option value="">Seleccionar...</option>
+                  {categorias.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
@@ -160,22 +167,13 @@ export default function ComprasPage() {
                   <input value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Valor unit. est.</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Valor unitario</label>
                   <input type="number" min={0} value={form.estimated_value} onChange={e => setForm({...form, estimated_value: parseFloat(e.target.value)})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Prioridad</label>
-                <select value={form.priority} onChange={e => setForm({...form, priority: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                  <option value="baja">Baja</option>
-                  <option value="normal">Normal</option>
-                  <option value="alta">Alta</option>
-                  <option value="urgente">Urgente</option>
-                </select>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-3 text-sm">
-                <span className="text-slate-600">Total estimado: </span>
-                <span className="font-bold text-slate-800">${((form.quantity || 0) * (form.estimated_value || 0)).toLocaleString('es-CO')}</span>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm">
+                <span className="text-slate-600">Monto solicitado: </span>
+                <span className="font-bold text-green-800">${((form.quantity || 0) * (form.estimated_value || 0)).toLocaleString('es-CO')}</span>
               </div>
             </div>
             {error && <div className="mt-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{error}</div>}

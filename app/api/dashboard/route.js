@@ -14,14 +14,28 @@ export async function GET() {
   const user = await getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
-  // All purchase requests visible to this user
+  const COMPRAS_ROLES = ['admin_plataforma','admin_copropiedad','contador','tesorero','presidente_consejo','secretario_consejo','vocal_consejo']
+  if (!COMPRAS_ROLES.includes(user.role)) {
+    // Para roles sin acceso a compras, solo devolver tickets
+    let ticketQuery = supabaseAdmin.from('tickets').select('id, status, priority, created_at')
+    if (user.role === 'copropietario') ticketQuery = ticketQuery.eq('created_by', user.id)
+    const { data: tickets } = await ticketQuery
+    const totalTickets = tickets?.length || 0
+    const ticketsAbiertos = tickets?.filter(t => ['abierto','en_gestion','pendiente_info'].includes(t.status)).length || 0
+    const ticketsUrgentes = tickets?.filter(t => t.priority === 'urgente').length || 0
+    const ticketPorEstado = [
+      { estado: 'Abierto', cantidad: tickets?.filter(t => t.status === 'abierto').length || 0 },
+      { estado: 'En Gestión', cantidad: tickets?.filter(t => t.status === 'en_gestion').length || 0 },
+      { estado: 'Pendiente', cantidad: tickets?.filter(t => t.status === 'pendiente_info').length || 0 },
+      { estado: 'Resuelto', cantidad: tickets?.filter(t => t.status === 'resuelto').length || 0 },
+      { estado: 'Cerrado', cantidad: tickets?.filter(t => t.status === 'cerrado').length || 0 },
+    ].filter(s => s.cantidad > 0)
+    return NextResponse.json({ compras: null, tickets: { totalTickets, ticketsAbiertos, ticketsUrgentes, ticketPorEstado } })
+  }
+
   let query = supabaseAdmin
     .from('purchase_requests')
     .select('id, status, category, priority, estimated_total, payment_amount, created_at, created_by')
-
-  if (user.role === 'copropietario') {
-    query = query.eq('created_by', user.id)
-  }
 
   const { data: compras, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -44,11 +58,11 @@ export async function GET() {
   const pendientes = compras?.filter(c => ['enviada','en_analisis'].includes(c.status)).length || 0
 
   // Por estado
-  const statusOrder = ['enviada','en_analisis','aprobada_consejo','rechazada_consejo','proveedor_definido','pedido_realizado','factura_recibida','factura_devuelta','pagado']
+  const statusOrder = ['enviada','aprobada_consejo','rechazada_consejo','compra_directa','proveedor_definido','factura_recibida','factura_devuelta','pagado','retirada']
   const statusLabels = {
-    enviada: 'Enviada', en_analisis: 'En Análisis', aprobada_consejo: 'Aprobada',
-    rechazada_consejo: 'Rechazada', proveedor_definido: 'Proveedor Def.',
-    pedido_realizado: 'Pedido', factura_recibida: 'Factura', factura_devuelta: 'F. Devuelta', pagado: 'Pagado'
+    enviada: 'Enviada', aprobada_consejo: 'Aprobada', rechazada_consejo: 'Rechazada',
+    compra_directa: 'Compra Directa', proveedor_definido: 'En Gestión',
+    factura_recibida: 'Factura', factura_devuelta: 'F. Devuelta', pagado: 'Pagado', retirada: 'Retirada'
   }
   const porEstado = statusOrder.map(s => ({
     estado: statusLabels[s],

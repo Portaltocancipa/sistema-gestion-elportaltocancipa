@@ -6,10 +6,11 @@ import Link from 'next/link'
 
 const menuItems = [
   { href: '/dashboard', label: 'Inicio', icon: '🏠', roles: ['admin_plataforma','admin_copropiedad','contador','tesorero','presidente_consejo','secretario_consejo','vocal_consejo','convivencia','copropietario'] },
-  { href: '/dashboard/usuarios', label: 'Usuarios', icon: '👥', roles: ['admin_plataforma'] },
-  { href: '/dashboard/parametros', label: 'Parámetros', icon: '⚙️', roles: ['admin_plataforma','admin_copropiedad'] },
+  { href: '/dashboard/estadisticas', label: 'Estadísticas', icon: '📊', roles: ['admin_plataforma','admin_copropiedad','contador','tesorero','presidente_consejo','secretario_consejo','vocal_consejo','convivencia'] },
   { href: '/dashboard/compras', label: 'Compras', icon: '🛒', roles: ['admin_plataforma','admin_copropiedad','contador','tesorero','presidente_consejo','secretario_consejo','vocal_consejo'] },
   { href: '/dashboard/tickets', label: 'Tickets', icon: '🎫', roles: ['admin_plataforma','admin_copropiedad','contador','tesorero','presidente_consejo','secretario_consejo','vocal_consejo','convivencia','copropietario'] },
+  { href: '/dashboard/parametros', label: 'Parámetros', icon: '⚙️', roles: ['admin_plataforma','admin_copropiedad'] },
+  { href: '/dashboard/usuarios', label: 'Usuarios', icon: '👥', roles: ['admin_plataforma'] },
 ]
 
 export default function DashboardLayout({ children }) {
