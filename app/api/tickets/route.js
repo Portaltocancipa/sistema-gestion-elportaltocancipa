@@ -38,10 +38,10 @@ export async function POST(request) {
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const body = await request.json()
-  const { ticket_type_id, title, description, priority, apartment } = body
+  const { ticket_type_id, title, description, apartment } = body
 
-  if (!ticket_type_id || !title || !description) {
-    return NextResponse.json({ error: 'Campos requeridos incompletos' }, { status: 400 })
+  if (!ticket_type_id || !title || !description || !apartment) {
+    return NextResponse.json({ error: 'Todos los campos son obligatorios' }, { status: 400 })
   }
 
   const { data: ticketType } = await supabaseAdmin
@@ -55,7 +55,7 @@ export async function POST(request) {
 
   const { data, error } = await supabaseAdmin
     .from('tickets')
-    .insert([{ ticket_type_id, title, description, priority: priority || 'normal', apartment: apartment || user.apartment, created_by: user.id, due_date: due_date.toISOString().split('T')[0] }])
+    .insert([{ ticket_type_id, title, description, priority: 'normal', apartment, created_by: user.id, due_date: due_date.toISOString().split('T')[0] }])
     .select()
     .single()
 

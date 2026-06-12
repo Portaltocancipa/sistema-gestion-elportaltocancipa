@@ -31,7 +31,7 @@ export default function TicketsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [ticketTypes, setTicketTypes] = useState([])
-  const [form, setForm] = useState({ ticket_type_id: '', title: '', description: '', priority: 'normal', apartment: '' })
+  const [form, setForm] = useState({ ticket_type_id: '', title: '', description: '', apartment: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -57,16 +57,22 @@ export default function TicketsPage() {
   }
 
   const handleCreate = async () => {
+    if (!form.ticket_type_id || !form.title.trim() || !form.description.trim() || !form.apartment.trim()) {
+      setError('Todos los campos son obligatorios')
+      return
+    }
     setSaving(true)
     setError('')
     const res = await fetch('/api/tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
     const data = await res.json()
     if (!res.ok) { setError(data.error || 'Error al crear ticket'); setSaving(false); return }
     setShowModal(false)
-    setForm({ ticket_type_id: '', title: '', description: '', priority: 'normal', apartment: '' })
+    setForm({ ticket_type_id: '', title: '', description: '', apartment: '' })
     fetchTickets(page)
     setSaving(false)
   }
+
+  const selectedType = ticketTypes.find(t => t.id === form.ticket_type_id)
 
   const filtered = filterStatus ? tickets.filter(t => t.status === filterStatus) : tickets
 
@@ -157,6 +163,15 @@ export default function TicketsPage() {
                   <option value="">Seleccionar...</option>
                   {ticketTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
+                {selectedType?.response_days && (
+                  <p className="text-xs text-green-700 mt-1.5 bg-green-50 border border-green-200 rounded px-2 py-1">
+                    ⏱ Tiempo de respuesta: <strong>{selectedType.response_days} día{selectedType.response_days !== 1 ? 's' : ''}</strong> hábiles
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Torre - Apartamento *</label>
+                <input placeholder="Ej: 3-202" value={form.apartment} onChange={e => setForm({...form, apartment: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Título *</label>
@@ -165,21 +180,6 @@ export default function TicketsPage() {
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Descripción *</label>
                 <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Prioridad</label>
-                  <select value={form.priority} onChange={e => setForm({...form, priority: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                    <option value="baja">Baja</option>
-                    <option value="normal">Normal</option>
-                    <option value="alta">Alta</option>
-                    <option value="urgente">Urgente</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Apartamento</label>
-                  <input value={form.apartment} onChange={e => setForm({...form, apartment: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-                </div>
               </div>
             </div>
             {error && <div className="mt-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{error}</div>}

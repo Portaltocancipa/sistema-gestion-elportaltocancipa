@@ -28,7 +28,6 @@ const accesos = {
     { href: '/dashboard/estadisticas', icon: '📊', label: 'Estadísticas', desc: 'Dashboard general' },
     { href: '/dashboard/compras', icon: '🛒', label: 'Compras', desc: 'Solicitudes de compra' },
     { href: '/dashboard/tickets', icon: '🎫', label: 'Tickets', desc: 'Gestión de solicitudes' },
-    { href: '/dashboard/parametros', icon: '⚙️', label: 'Parámetros', desc: 'Tipos y categorías' },
   ],
   contador: [
     { href: '/dashboard/estadisticas', icon: '📊', label: 'Estadísticas', desc: 'Dashboard general' },
