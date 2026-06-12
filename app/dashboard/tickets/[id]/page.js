@@ -15,6 +15,9 @@ export default function TicketDetailPage() {
   const [sending, setSending] = useState(false)
   const [user, setUser] = useState(null)
   const [isInternal, setIsInternal] = useState(false)
+  const [survey, setSurvey] = useState({ satisfied: null, rating: null, observations: '' })
+  const [surveyError, setSurveyError] = useState('')
+  const [sendingSurvey, setSendingSurvey] = useState(false)
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user))
@@ -56,6 +59,23 @@ export default function TicketDetailPage() {
   const isAdmin = user?.role === 'admin_plataforma'
   const isAsignado = ticket && user && ticket.assigned_to === user.id
   const puedeGestionar = isAdmin || isAsignado
+  const esMiTicket = ticket && user && ticket.created_by === user.id
+  const puedeEncuesta = esMiTicket && ['resuelto','cerrado'].includes(ticket?.status) && !ticket?.survey_completed_at
+
+  const handleSurvey = async () => {
+    if (survey.satisfied === null) { setSurveyError('Indique si está satisfecho'); return }
+    if (!survey.rating) { setSurveyError('Seleccione una calificación del 1 al 5'); return }
+    setSendingSurvey(true); setSurveyError('')
+    const res = await fetch(`/api/tickets/${id}/encuesta`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ survey_satisfied: survey.satisfied, survey_rating: survey.rating, survey_observations: survey.observations })
+    })
+    const data = await res.json()
+    if (!res.ok) { setSurveyError(data.error || 'Error al enviar'); setSendingSurvey(false); return }
+    setSendingSurvey(false)
+    fetchTicket()
+  }
 
   if (loading) return <div className="p-8 text-center text-slate-400">Cargando...</div>
   if (!ticket) return <div className="p-8 text-center text-slate-400">Ticket no encontrado</div>
@@ -117,6 +137,18 @@ export default function TicketDetailPage() {
           ))}
         </div>
 
+        {/* Encuesta de satisfacción completada — visible para todos */}
+        {ticket.survey_completed_at && (
+          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 text-sm">
+            <p className="font-semibold text-green-800 mb-2">✓ Encuesta de satisfacción respondida</p>
+            <div className="grid grid-cols-2 gap-2 text-slate-700">
+              <span>¿Satisfecho?: <strong>{ticket.survey_satisfied ? 'Sí' : 'No'}</strong></span>
+              <span>Calificación: <strong>{'★'.repeat(ticket.survey_rating || 0)}{'☆'.repeat(5 - (ticket.survey_rating || 0))} ({ticket.survey_rating}/5)</strong></span>
+              {ticket.survey_observations && <span className="col-span-2">Observaciones: <em>{ticket.survey_observations}</em></span>}
+            </div>
+          </div>
+        )}
+
         {ticket.status !== 'cerrado' && (isCopropietario || puedeGestionar) && (
           <div>
             <textarea
@@ -140,6 +172,83 @@ export default function TicketDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Encuesta de satisfacción pendiente */}
+      {puedeEncuesta && (
+        <div className="bg-white rounded-xl shadow-sm border-2 border-orange-300 p-6 mt-2">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">📋</span>
+            <div>
+              <h2 className="text-sm font-bold text-slate-800">Encuesta de satisfacción</h2>
+              <p className="text-xs text-slate-500">Su ticket fue resuelto. Por favor califique la atención recibida.</p>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            {/* Pregunta 1 */}
+            <div>
+              <p className="text-sm font-medium text-slate-700 mb-2">1. ¿Está satisfecho con la respuesta?</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setSurvey(s => ({...s, satisfied: true}))}
+                  className={`px-5 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${survey.satisfied === true ? 'bg-green-600 border-green-600 text-white' : 'border-slate-300 text-slate-600 hover:border-green-400'}`}
+                >
+                  👍 Sí
+                </button>
+                <button
+                  onClick={() => setSurvey(s => ({...s, satisfied: false}))}
+                  className={`px-5 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${survey.satisfied === false ? 'bg-red-500 border-red-500 text-white' : 'border-slate-300 text-slate-600 hover:border-red-400'}`}
+                >
+                  👎 No
+                </button>
+              </div>
+            </div>
+
+            {/* Pregunta 2 */}
+            <div>
+              <p className="text-sm font-medium text-slate-700 mb-2">2. Califique de 1 a 5 la atención recibida</p>
+              <div className="flex gap-2">
+                {[1,2,3,4,5].map(n => (
+                  <button
+                    key={n}
+                    onClick={() => setSurvey(s => ({...s, rating: n}))}
+                    className={`w-11 h-11 rounded-lg text-lg font-bold border-2 transition-colors ${survey.rating === n ? 'bg-orange-500 border-orange-500 text-white' : 'border-slate-300 text-slate-500 hover:border-orange-400 hover:text-orange-500'}`}
+                  >
+                    {n}
+                  </button>
+                ))}
+                {survey.rating && (
+                  <span className="ml-2 text-2xl self-center">
+                    {'★'.repeat(survey.rating)}{'☆'.repeat(5 - survey.rating)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Pregunta 3 */}
+            <div>
+              <p className="text-sm font-medium text-slate-700 mb-2">3. Deje sus observaciones sobre la atención recibida</p>
+              <textarea
+                value={survey.observations}
+                onChange={e => setSurvey(s => ({...s, observations: e.target.value}))}
+                placeholder="Opcional — cuéntenos su experiencia..."
+                rows={3}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+            </div>
+          </div>
+
+          {surveyError && <div className="mt-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{surveyError}</div>}
+
+          <button
+            onClick={handleSurvey}
+            disabled={sendingSurvey}
+            className="mt-4 w-full bg-orange-700 hover:bg-orange-800 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-60"
+          >
+            {sendingSurvey ? 'Enviando...' : 'Enviar encuesta'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

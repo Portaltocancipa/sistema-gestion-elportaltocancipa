@@ -26,12 +26,19 @@ export async function GET(request) {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
+  const view = searchParams.get('view')
+
   if (user.role === 'copropietario') {
     query = query.eq('created_by', user.id)
-  } else if (user.role !== 'admin_plataforma') {
+  } else if (view === 'mios') {
     query = query.eq('assigned_to', user.id)
-  } else if (assignedFilter) {
-    query = query.eq('assigned_to', assignedFilter)
+  } else if (view === 'all') {
+    // sin filtro — todos los tickets
+    if (assignedFilter) query = query.eq('assigned_to', assignedFilter)
+  } else {
+    // default: por rol
+    if (user.role !== 'admin_plataforma') query = query.eq('assigned_to', user.id)
+    else if (assignedFilter) query = query.eq('assigned_to', assignedFilter)
   }
 
   const { data, error, count } = await query
