@@ -49,19 +49,28 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
+const COMPRAS_ROLES = ['admin_plataforma','admin_copropiedad','contador','tesorero','presidente_consejo','secretario_consejo','vocal_consejo']
+
 export default function DashboardPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('compras')
+  const [tab, setTab] = useState(null)
+  const [userRole, setUserRole] = useState(null)
 
   useEffect(() => {
-    fetch('/api/dashboard')
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
+    Promise.all([
+      fetch('/api/dashboard').then(r => r.json()),
+      fetch('/api/auth/me').then(r => r.json()),
+    ]).then(([dashData, meData]) => {
+      setData(dashData)
+      const role = meData.user?.role
+      setUserRole(role)
+      setTab(COMPRAS_ROLES.includes(role) ? 'compras' : 'tickets')
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [])
 
-  if (loading) return (
+  if (loading || !tab) return (
     <div className="p-8 flex items-center justify-center min-h-96">
       <div className="text-center">
         <div className="w-10 h-10 border-4 border-green-800 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
@@ -73,6 +82,7 @@ export default function DashboardPage() {
   if (!data) return <div className="p-8 text-center text-slate-400">No se pudieron cargar los datos</div>
 
   const { compras: c, tickets: t } = data
+  const puedeVerCompras = COMPRAS_ROLES.includes(userRole)
 
   return (
     <div className="p-6 space-y-6">
@@ -84,9 +94,11 @@ export default function DashboardPage() {
           <p className="text-slate-500 text-sm">Resumen general del sistema</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setTab('compras')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'compras' ? 'bg-green-800 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
-            🛒 Compras
-          </button>
+          {puedeVerCompras && (
+            <button onClick={() => setTab('compras')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'compras' ? 'bg-green-800 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+              🛒 Compras
+            </button>
+          )}
           <button onClick={() => setTab('tickets')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'tickets' ? 'bg-green-800 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
             🎫 Tickets
           </button>
