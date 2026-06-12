@@ -269,7 +269,8 @@ export default function CompraDetailPage() {
       {/* Modal de acción */}
       {showActionModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md max-h-screen overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col max-h-[90vh]">
+            <div className="p-6 overflow-y-auto flex-1">
             <h2 className="text-lg font-bold text-slate-800 mb-4">
               {actionType === 'aprobar_consejo' && '✓ Aprobar Solicitud'}
               {actionType === 'rechazar_consejo' && '✗ Rechazar Solicitud'}
@@ -413,8 +414,9 @@ export default function CompraDetailPage() {
                 </>
               )}
             </div>
+            </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-3 p-6 pt-4 border-t border-slate-100">
               <button onClick={() => setShowActionModal(false)} className="flex-1 border border-slate-300 text-slate-700 py-2 rounded-lg text-sm hover:bg-slate-50">Cancelar</button>
               <button onClick={handleConfirmAction} disabled={saving} className="flex-1 bg-orange-700 hover:bg-orange-800 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {saving ? 'Guardando...' : 'Confirmar'}
