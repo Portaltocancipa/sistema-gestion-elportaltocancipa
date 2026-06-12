@@ -81,6 +81,17 @@ export default function CompraDetailPage() {
       return
     }
 
+    if (actionType === 'pago') {
+      if (!actionForm.payment_amount || !actionForm.payment_date || !actionForm.payment_auth_number) {
+        alert('Complete monto, fecha y N° de autorización')
+        return
+      }
+      if (actionForm.payment_method === 'transferencia' && !actionForm.payment_bank) {
+        alert('Indique el Banco Destino para la transferencia')
+        return
+      }
+    }
+
     const statusMap = {
       rechazar_consejo: 'rechazada_consejo',
       caracteristicas: 'proveedor_definido',
@@ -421,22 +432,21 @@ export default function CompraDetailPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Método de pago</label>
-                    <select value={actionForm.payment_method || ''} onChange={e => setActionForm({...actionForm, payment_method: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <select value={actionForm.payment_method || ''} onChange={e => setActionForm({...actionForm, payment_method: e.target.value, payment_bank: ''})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                       <option value="">Seleccionar...</option>
                       <option value="transferencia">Transferencia</option>
+                      <option value="pse">PSE</option>
                       <option value="cheque">Cheque</option>
                       <option value="efectivo">Efectivo</option>
                       <option value="tarjeta">Tarjeta</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Banco</label>
-                    <input value={actionForm.payment_bank || ''} onChange={e => setActionForm({...actionForm, payment_bank: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Cuenta contable del pago</label>
-                    <input value={actionForm.payment_accounting_account || ''} onChange={e => setActionForm({...actionForm, payment_accounting_account: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-                  </div>
+                  {actionForm.payment_method === 'transferencia' && (
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Banco Destino *</label>
+                      <input value={actionForm.payment_bank || ''} onChange={e => setActionForm({...actionForm, payment_bank: e.target.value})} placeholder="Ej: Bancolombia, Davivienda..." className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                  )}
                 </>
               )}
 
