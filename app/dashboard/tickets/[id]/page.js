@@ -53,6 +53,9 @@ export default function TicketDetailPage() {
   }
 
   const isCopropietario = user?.role === 'copropietario'
+  const isAdmin = user?.role === 'admin_plataforma'
+  const isAsignado = ticket && user && ticket.assigned_to === user.id
+  const puedeGestionar = isAdmin || isAsignado
 
   if (loading) return <div className="p-8 text-center text-slate-400">Cargando...</div>
   if (!ticket) return <div className="p-8 text-center text-slate-400">Ticket no encontrado</div>
@@ -73,19 +76,27 @@ export default function TicketDetailPage() {
 
         <p className="text-slate-700 text-sm bg-slate-50 rounded-lg p-4">{ticket.description}</p>
 
-        <div className="flex gap-4 mt-4 text-xs text-slate-500">
+        <div className="flex gap-4 mt-4 text-xs text-slate-500 flex-wrap">
           <span>Solicitante: <strong>{ticket.profiles?.full_name}</strong></span>
+          <span>Torre - Apto: <strong>{ticket.apartment || '-'}</strong></span>
+          <span>Dirigido a: <strong className="text-green-700">{ticket.assigned?.full_name || '-'}</strong></span>
           <span>Vence: <strong>{ticket.due_date || '-'}</strong></span>
           <span>Creado: <strong>{new Date(ticket.created_at).toLocaleDateString('es-CO')}</strong></span>
         </div>
 
         {!isCopropietario && ticket.status !== 'cerrado' && (
-          <div className="flex gap-2 mt-4 flex-wrap">
-            {ticket.status === 'abierto' && <button onClick={() => updateStatus('en_gestion')} className="bg-yellow-500 text-white px-3 py-1.5 rounded-lg text-xs">Tomar en gestión</button>}
-            {ticket.status === 'en_gestion' && <button onClick={() => updateStatus('pendiente_info')} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs">Solicitar información</button>}
-            {['en_gestion','pendiente_info'].includes(ticket.status) && <button onClick={() => updateStatus('resuelto')} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs">Marcar resuelto</button>}
-            {ticket.status === 'resuelto' && <button onClick={() => updateStatus('cerrado')} className="bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs">Cerrar ticket</button>}
-          </div>
+          puedeGestionar ? (
+            <div className="flex gap-2 mt-4 flex-wrap">
+              {ticket.status === 'abierto' && <button onClick={() => updateStatus('en_gestion')} className="bg-yellow-500 text-white px-3 py-1.5 rounded-lg text-xs">Tomar en gestión</button>}
+              {ticket.status === 'en_gestion' && <button onClick={() => updateStatus('pendiente_info')} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs">Solicitar información</button>}
+              {['en_gestion','pendiente_info'].includes(ticket.status) && <button onClick={() => updateStatus('resuelto')} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs">Marcar resuelto</button>}
+              {ticket.status === 'resuelto' && <button onClick={() => updateStatus('cerrado')} className="bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs">Cerrar ticket</button>}
+            </div>
+          ) : (
+            <p className="mt-4 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              Este ticket está asignado a <strong>{ticket.assigned?.full_name}</strong>. Solo esa persona puede gestionarlo.
+            </p>
+          )
         )}
       </div>
 
@@ -106,7 +117,7 @@ export default function TicketDetailPage() {
           ))}
         </div>
 
-        {ticket.status !== 'cerrado' && (
+        {ticket.status !== 'cerrado' && (isCopropietario || puedeGestionar) && (
           <div>
             <textarea
               value={message}
@@ -116,7 +127,7 @@ export default function TicketDetailPage() {
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 mb-2"
             />
             <div className="flex items-center justify-between">
-              {!isCopropietario && (
+              {puedeGestionar && !isCopropietario && (
                 <label className="flex items-center gap-2 text-xs text-slate-600">
                   <input type="checkbox" checked={isInternal} onChange={e => setIsInternal(e.target.checked)} />
                   Nota interna (no visible para copropietario)

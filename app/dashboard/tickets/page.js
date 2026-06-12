@@ -31,7 +31,8 @@ export default function TicketsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [ticketTypes, setTicketTypes] = useState([])
-  const [form, setForm] = useState({ ticket_type_id: '', title: '', description: '', apartment: '' })
+  const [asignables, setAsignables] = useState([])
+  const [form, setForm] = useState({ ticket_type_id: '', title: '', description: '', apartment: '', assigned_to: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -40,9 +41,20 @@ export default function TicketsPage() {
   const [total, setTotal] = useState(0)
   const limit = 20
 
+  const roleLabels = {
+    admin_copropiedad: 'Administrador',
+    presidente_consejo: 'Presidente Consejo',
+    secretario_consejo: 'Secretario',
+    vocal_consejo: 'Vocal',
+    contador: 'Contador',
+    tesorero: 'Tesorero',
+    convivencia: 'Convivencia',
+  }
+
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user))
     fetch('/api/parametros').then(r => r.json()).then(d => setTicketTypes(d.data?.filter(t => t.is_active) || []))
+    fetch('/api/usuarios/asignables').then(r => r.json()).then(d => setAsignables(d.data || []))
   }, [])
 
   useEffect(() => { fetchTickets(page) }, [page])
@@ -57,7 +69,7 @@ export default function TicketsPage() {
   }
 
   const handleCreate = async () => {
-    if (!form.ticket_type_id || !form.title.trim() || !form.description.trim() || !form.apartment.trim()) {
+    if (!form.ticket_type_id || !form.title.trim() || !form.description.trim() || !form.apartment.trim() || !form.assigned_to) {
       setError('Todos los campos son obligatorios')
       return
     }
@@ -67,12 +79,13 @@ export default function TicketsPage() {
     const data = await res.json()
     if (!res.ok) { setError(data.error || 'Error al crear ticket'); setSaving(false); return }
     setShowModal(false)
-    setForm({ ticket_type_id: '', title: '', description: '', apartment: '' })
+    setForm({ ticket_type_id: '', title: '', description: '', apartment: '', assigned_to: '' })
     fetchTickets(page)
     setSaving(false)
   }
 
   const selectedType = ticketTypes.find(t => t.id === form.ticket_type_id)
+  const selectedAsignado = asignables.find(a => a.id === form.assigned_to)
 
   const filtered = filterStatus ? tickets.filter(t => t.status === filterStatus) : tickets
 
@@ -108,7 +121,7 @@ export default function TicketsPage() {
                 <th className="px-4 py-3 font-medium">Título</th>
                 <th className="px-4 py-3 font-medium">Tipo</th>
                 <th className="px-4 py-3 font-medium">Solicitante</th>
-                <th className="px-4 py-3 font-medium">Prioridad</th>
+                <th className="px-4 py-3 font-medium">Dirigido a</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
                 <th className="px-4 py-3 font-medium">Vence</th>
                 <th className="px-4 py-3 font-medium">Acción</th>
@@ -121,9 +134,7 @@ export default function TicketsPage() {
                   <td className="px-4 py-3 font-medium text-slate-800 max-w-xs truncate">{t.title}</td>
                   <td className="px-4 py-3 text-slate-600">{t.ticket_types?.name || '-'}</td>
                   <td className="px-4 py-3 text-slate-600">{t.profiles?.full_name || '-'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs ${priorityColors[t.priority]}`}>{t.priority}</span>
-                  </td>
+                  <td className="px-4 py-3 text-slate-600">{t.assigned?.full_name || '-'}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded-full text-xs ${statusColors[t.status]}`}>{statusLabels[t.status]}</span>
                   </td>
@@ -180,6 +191,20 @@ export default function TicketsPage() {
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Descripción *</label>
                 <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Dirigido a *</label>
+                <select value={form.assigned_to} onChange={e => setForm({...form, assigned_to: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <option value="">Seleccionar persona...</option>
+                  {asignables.map(a => (
+                    <option key={a.id} value={a.id}>{a.full_name} — {roleLabels[a.role] || a.role}</option>
+                  ))}
+                </select>
+                {selectedAsignado && (
+                  <p className="text-xs text-slate-600 mt-1.5 bg-slate-50 border border-slate-200 rounded px-2 py-1">
+                    👤 <strong>{selectedAsignado.full_name}</strong> · {roleLabels[selectedAsignado.role] || selectedAsignado.role}
+                  </p>
+                )}
               </div>
             </div>
             {error && <div className="mt-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{error}</div>}

@@ -35,22 +35,24 @@ export async function PUT(request, { params }) {
   const { id } = await params
   const body = await request.json()
 
+  const { data: ticket } = await supabaseAdmin.from('tickets').select('created_by, assigned_to').eq('id', id).single()
+
   if (user.role === 'copropietario') {
-    const { data: ticket } = await supabaseAdmin.from('tickets').select('created_by').eq('id', id).single()
     if (ticket?.created_by !== user.id)
       return NextResponse.json({ error: 'No puede modificar tickets de otros usuarios' }, { status: 403 })
     if (body.status !== 'cerrado')
       return NextResponse.json({ error: 'Solo puede cerrar sus propios tickets' }, { status: 403 })
-  } else if (!STAFF_ROLES.includes(user.role)) {
+  } else if (user.role === 'admin_plataforma') {
+    // admin_plataforma puede todo
+  } else if (STAFF_ROLES.includes(user.role)) {
+    if (ticket?.assigned_to !== user.id)
+      return NextResponse.json({ error: 'Solo la persona asignada puede gestionar este ticket' }, { status: 403 })
+  } else {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
-  } else if (body.assigned_to && !ADMIN_ROLES.includes(user.role)) {
-    return NextResponse.json({ error: 'Solo administradores pueden asignar tickets' }, { status: 403 })
   }
 
   const updates = {}
   if (body.status) updates.status = body.status
-  if (body.assigned_to && ADMIN_ROLES.includes(user.role)) updates.assigned_to = body.assigned_to
-  if (body.priority && STAFF_ROLES.includes(user.role)) updates.priority = body.priority
   if (body.status === 'resuelto') updates.resolved_at = new Date().toISOString()
   if (body.status === 'cerrado') updates.closed_at = new Date().toISOString()
   const { data, error } = await supabaseAdmin.from('tickets').update(updates).eq('id', id).select().single()
