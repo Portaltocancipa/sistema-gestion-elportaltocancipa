@@ -18,9 +18,18 @@ export default function TicketDetailPage() {
   const [survey, setSurvey] = useState({ satisfied: null, rating: null, observations: '' })
   const [surveyError, setSurveyError] = useState('')
   const [sendingSurvey, setSendingSurvey] = useState(false)
+  const [asignables, setAsignables] = useState([])
+  const [newAssignee, setNewAssignee] = useState('')
+  const [reasigning, setReasigning] = useState(false)
+  const [reasignError, setReasignError] = useState('')
 
   useEffect(() => {
-    fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user))
+    fetch('/api/auth/me').then(r => r.json()).then(d => {
+      setUser(d.user)
+      if (d.user?.role === 'admin_plataforma') {
+        fetch('/api/usuarios/asignables').then(r => r.json()).then(a => setAsignables(a.data || []))
+      }
+    })
     fetchTicket()
   }, [id])
 
@@ -61,6 +70,21 @@ export default function TicketDetailPage() {
   const puedeGestionar = isAdmin || isAsignado
   const esMiTicket = ticket && user && ticket.created_by === user.id
   const puedeEncuesta = esMiTicket && ['resuelto','cerrado'].includes(ticket?.status) && !ticket?.survey_completed_at
+
+  const handleReasign = async () => {
+    if (!newAssignee) { setReasignError('Seleccione una persona'); return }
+    setReasigning(true); setReasignError('')
+    const res = await fetch(`/api/tickets/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assigned_to: newAssignee })
+    })
+    const data = await res.json()
+    if (!res.ok) { setReasignError(data.error || 'Error al reasignar'); setReasigning(false); return }
+    setNewAssignee('')
+    setReasigning(false)
+    fetchTicket()
+  }
 
   const handleSurvey = async () => {
     if (survey.satisfied === null) { setSurveyError('Indique si está satisfecho'); return }
@@ -119,6 +143,36 @@ export default function TicketDetailPage() {
           )
         )}
       </div>
+
+      {/* Reasignación — solo admin_plataforma */}
+      {isAdmin && ticket.status !== 'cerrado' && (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+          <h2 className="text-sm font-bold text-slate-700 mb-3">Reasignar Ticket</h2>
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <label className="block text-xs text-slate-500 mb-1">Asignado actualmente: <strong>{ticket.assigned?.full_name || '-'}</strong></label>
+              <select
+                value={newAssignee}
+                onChange={e => { setNewAssignee(e.target.value); setReasignError('') }}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Seleccionar nuevo responsable...</option>
+                {asignables.filter(a => a.id !== ticket.assigned_to).map(a => (
+                  <option key={a.id} value={a.id}>{a.full_name} ({a.role})</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={handleReasign}
+              disabled={reasigning || !newAssignee}
+              className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60 whitespace-nowrap"
+            >
+              {reasigning ? 'Reasignando...' : 'Reasignar'}
+            </button>
+          </div>
+          {reasignError && <p className="text-red-600 text-xs mt-2">{reasignError}</p>}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         <h2 className="text-sm font-bold text-slate-700 mb-4">Hilo de mensajes</h2>

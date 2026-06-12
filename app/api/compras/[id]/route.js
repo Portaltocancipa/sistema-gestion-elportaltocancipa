@@ -168,6 +168,24 @@ export async function PUT(request, { params }) {
       }
     }
 
+    if (body.status === 'factura_recibida') {
+      const recipients = await getEmailsByRoles(CONSEJO_ROLES)
+      const emails = [...new Set([...recipients.map(r => r.email), ...(creatorEmail ? [creatorEmail] : [])])]
+      if (emails.length > 0) {
+        await sendEmail({
+          to: emails,
+          subject: `Factura Recibida — ${reqNum}`,
+          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+            <h2 style="color:#ea580c">Factura Registrada en Tesorería</h2>
+            <p>Se registró la factura de la solicitud <strong>${reqNum} — ${reqTitle}</strong>.</p>
+            ${notes ? `<p><strong>Observaciones:</strong> ${notes}</p>` : ''}
+            <a href="${link}" style="background:#ea580c;color:white;padding:12px 24px;text-decoration:none;border-radius:8px;display:inline-block;margin-top:12px">Ver Solicitud</a>
+            <p style="color:#94a3b8;font-size:12px;margin-top:24px">Agrupación de Vivienda Portal de Tocancipá P.H.</p>
+          </div>`
+        })
+      }
+    }
+
     if (body.status === 'factura_devuelta') {
       const recipients = await getEmailsByRoles(GESTION_ROLES)
       if (recipients.length > 0) {
