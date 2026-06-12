@@ -179,7 +179,7 @@ export default function CompraDetailPage() {
           </div>
         )}
 
-        {(compra.purchase_characteristics || compra.supplier_definition || compra.purchase_requirements || compra.purchase_observations) && (
+        {(compra.purchase_characteristics || compra.supplier_definition || compra.purchase_requirements || compra.purchase_observations || compra.council_meeting_date) && (
           <div className="bg-purple-50 border border-purple-100 rounded-lg p-3 mb-4">
             <p className="text-xs font-semibold text-purple-700 mb-2">Características de Compra</p>
             <div className="space-y-1.5 text-sm">
@@ -187,6 +187,19 @@ export default function CompraDetailPage() {
               {compra.purchase_requirements && <p><strong>Requisitos:</strong> {compra.purchase_requirements}</p>}
               {compra.purchase_observations && <p><strong>Aclaraciones:</strong> {compra.purchase_observations}</p>}
               {compra.supplier_definition && <p><strong>Proveedor:</strong> {compra.supplier_definition}</p>}
+              {compra.council_meeting_date && (
+                <p><strong>Fecha reunión consejo:</strong> {new Date(compra.council_meeting_date + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+              )}
+              {compra.council_attendees?.length > 0 && (
+                <div className="flex items-start gap-2">
+                  <strong className="shrink-0">Asistentes:</strong>
+                  <div className="flex flex-wrap gap-1">
+                    {compra.council_attendees.map(a => (
+                      <span key={a} className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">✓ {a}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -338,6 +351,29 @@ export default function CompraDetailPage() {
                       <textarea placeholder="Nombre, NIT, contacto, condiciones..." value={actionForm.supplier_definition || ''} onChange={e => setActionForm({...actionForm, supplier_definition: e.target.value})} rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                     </div>
                   )}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Fecha reunión de consejo donde se aprobó</label>
+                    <input type="date" value={actionForm.council_meeting_date || ''} onChange={e => setActionForm({...actionForm, council_meeting_date: e.target.value})} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-2">Asistentes</label>
+                    <div className="space-y-2 pl-1">
+                      {['Presidente', 'Secretario', 'Tesorero', 'Vocal 1', 'Vocal 2'].map(a => (
+                        <label key={a} className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={(actionForm.council_attendees || []).includes(a)}
+                            onChange={e => {
+                              const prev = actionForm.council_attendees || []
+                              setActionForm({...actionForm, council_attendees: e.target.checked ? [...prev, a] : prev.filter(x => x !== a)})
+                            }}
+                            className="w-4 h-4 rounded accent-green-700"
+                          />
+                          <span className="text-slate-700">{a}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1">Observaciones</label>
                     <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
